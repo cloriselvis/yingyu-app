@@ -3,6 +3,7 @@ import * as audioArchive from "./audio-attachments.js";
 import * as audioStore from "./audio-store.js";
 import * as feedbackStore from "./feedback-store.js";
 import * as liveQuality from "./live-quality.js";
+import { COPY, formatCopy } from "./copy.js";
 
 const els = {
   babyName: document.querySelector("#babyName"),
@@ -37,32 +38,9 @@ const els = {
   resetBaby: document.querySelector("#resetBaby")
 };
 
-const labels = {
-  hunger: "想吃奶",
-  gas: "拍嗝/胀气",
-  tired: "困烦/过度刺激",
-  discomfort: "一般不适"
-};
-
-const ageBucketLabels = {
-  "0-2w": "0-2 周",
-  "3-8w": "3-8 周",
-  "9-16w": "9-16 周",
-  preterm_or_uncertain: "早产/不确定"
-};
-
-const featureLabels = {
-  durationSec: "录音时长",
-  validCrySec: "有效哭声",
-  cryRatio: "哭声占比",
-  snrDb: "信噪估计",
-  pitchMedian: "中位音高",
-  pitchP90: "高位音高",
-  highBandRatio: "尖锐度",
-  burstiness: "爆发度",
-  episodeCount: "哭声段数",
-  irregularity: "不稳定度"
-};
+const labels = COPY.labels;
+const ageBucketLabels = COPY.ageBucketLabels;
+const featureLabels = COPY.featureLabels;
 
 const state = {
   audioContext: null,
@@ -92,7 +70,8 @@ const state = {
 init();
 
 function init() {
-  els.babyName.value = localStorage.getItem("yingyu:lastBaby") || "宝宝";
+  hydrateStaticCopy();
+  els.babyName.value = localStorage.getItem("yingyu:lastBaby") || COPY.ui.defaultBabyName;
   els.keepAudio.checked = localStorage.getItem("yingyu:keepAudio") === "1";
   setStage("capture");
   drawIdleWave();
@@ -100,6 +79,51 @@ function init() {
   renderRecentFeedback();
   renderEnvironmentHint();
   bindEvents();
+}
+
+function hydrateStaticCopy() {
+  document.title = COPY.brand;
+  const targets = {
+    brand: COPY.brand,
+    subtitle: COPY.subtitle,
+    babyNameLabel: COPY.ui.babyNameLabel,
+    releaseTitle: COPY.ui.release.title,
+    releaseShort: COPY.ui.release.short,
+    releaseLink: COPY.ui.release.link,
+    captureReady: COPY.ui.capture.ready,
+    captureWaitingCry: COPY.ui.capture.waitingCry,
+    recordButton: COPY.ui.capture.recordButton,
+    secondarySummary: COPY.ui.capture.secondarySummary,
+    uploadAudio: COPY.ui.capture.uploadAudio,
+    keepAudio: COPY.ui.capture.keepAudio,
+    contextTitle: COPY.ui.context.title,
+    contextPending: COPY.ui.context.pending,
+    contextContinue: COPY.ui.context.continue,
+    contextSkip: COPY.ui.context.skip,
+    analysisTitle: COPY.ui.result.analysisTitle,
+    actionTitle: COPY.ui.result.actionTitle,
+    detailTitle: COPY.ui.result.detailTitle,
+    notAnalyzed: COPY.ui.result.notAnalyzed,
+    waitingResult: COPY.ui.result.waitingResult,
+    resultEmpty: COPY.ui.result.empty,
+    waitingActionPlan: COPY.ui.result.waitingActionPlan,
+    feedbackReport: COPY.ui.detail.feedbackReport,
+    importBaby: COPY.ui.detail.importBaby,
+    exportBaby: COPY.ui.detail.exportBaby,
+    resetBaby: COPY.ui.detail.resetBaby,
+    recentTitle: COPY.ui.detail.recentTitle,
+    recentNone: COPY.ui.detail.none,
+    recentEmpty: COPY.ui.detail.recentEmpty
+  };
+  for (const [key, value] of Object.entries(targets)) setText(`[data-copy='${key}']`, value);
+  els.recordBtn.setAttribute("aria-label", COPY.ui.capture.recordButton);
+  els.stopBtn.setAttribute("aria-label", COPY.ui.capture.stopButton);
+  els.stopBtn.setAttribute("title", COPY.ui.capture.stopButton);
+}
+
+function setText(selector, text) {
+  const target = document.querySelector(selector);
+  if (target) target.textContent = text;
 }
 
 function bindEvents() {
@@ -178,7 +202,7 @@ async function startRecording() {
     state.adjustedByQuestion = false;
     state.questionAnswer = null;
     if (!canUseMicrophone()) {
-      renderError("当前地址不能直接录音。手机测试请用 HTTPS 链接；现在可以先上传音频。");
+      renderError(COPY.ui.capture.microphoneBlocked);
       return;
     }
     const audioContext = await getAudioContext();
@@ -216,11 +240,11 @@ async function startRecording() {
     els.recordBtn.classList.add("recording");
     els.recordBtn.disabled = true;
     els.stopBtn.disabled = false;
-    els.recordState.textContent = "正在录音";
-    els.liveQuality.textContent = "建议 8-15 秒";
+    els.recordState.textContent = COPY.ui.capture.recording;
+    els.liveQuality.textContent = COPY.ui.capture.liveHint;
     drawLiveWave();
   } catch (error) {
-    renderError("无法使用麦克风。请检查浏览器权限，或上传一段音频。");
+    renderError(COPY.ui.capture.microphoneError);
     cleanupRecording();
   }
 }
@@ -267,9 +291,9 @@ function cleanupRecording() {
 
 async function analyzeBlob(blob, sourceName) {
   try {
-    els.recordState.textContent = "正在分析";
-    els.liveQuality.textContent = "处理中";
-    els.analysisStatus.textContent = "分析中";
+    els.recordState.textContent = COPY.ui.capture.analyzing;
+    els.liveQuality.textContent = COPY.ui.capture.processing;
+    els.analysisStatus.textContent = COPY.ui.capture.analyzing;
 
     const audioContext = await getAudioContext();
     const arrayBuffer = await blob.arrayBuffer();
@@ -278,18 +302,18 @@ async function analyzeBlob(blob, sourceName) {
     analyzeSamplesDirect(samples, decoded.sampleRate, sourceName, {
       blob,
       mimeType: blob.type || "",
-      errorMessage: "这段音频无法分析，请换一段更清楚的哭声。"
+      errorMessage: COPY.ui.capture.invalidAudio
     });
   } catch (error) {
-    renderError("这段音频无法解码，请换一段 wav、mp3、m4a 或 webm 音频。");
+    renderError(COPY.ui.capture.decodeError);
   }
 }
 
 function analyzeSamplesDirect(samples, sampleRate, sourceName, options = {}) {
   try {
-    els.recordState.textContent = "正在分析";
-    els.liveQuality.textContent = "处理中";
-    els.analysisStatus.textContent = "分析中";
+    els.recordState.textContent = COPY.ui.capture.analyzing;
+    els.liveQuality.textContent = COPY.ui.capture.processing;
+    els.analysisStatus.textContent = COPY.ui.capture.analyzing;
 
     const features = core.analyzeSamples(samples, sampleRate);
     const scored = scoreFeatures(features);
@@ -318,7 +342,7 @@ function analyzeSamplesDirect(samples, sampleRate, sourceName, options = {}) {
       renderAnalysis(state.current);
     }
   } catch (error) {
-    renderError(options.errorMessage || "测试样本分析失败，可以重新加载页面后再试。");
+    renderError(options.errorMessage || COPY.ui.capture.sampleError);
   }
 }
 
@@ -371,8 +395,8 @@ function renderContextStage(analysis) {
   }
 
   setStage("context");
-  els.recordState.textContent = "等待确认";
-  els.liveQuality.textContent = "补充信息";
+  els.recordState.textContent = COPY.ui.context.pending;
+  els.liveQuality.textContent = COPY.ui.capture.contextNeeded;
   renderContextQuestions();
 }
 
@@ -458,40 +482,47 @@ function renderAnalysis(analysis) {
 
   if (!quality.usable) {
     const guidance = core.getQualityGuidance(quality);
-    els.analysisStatus.textContent = "需要重录";
-    els.actionStatus.textContent = "先重录";
+    els.analysisStatus.textContent = COPY.ui.capture.needsRerecord;
+    els.actionStatus.textContent = COPY.ui.capture.needsRerecord;
     els.summary.className = "summary medium";
     els.summary.innerHTML = `
-      <strong>这段录音不适合判断。</strong><br>
+      <strong>${COPY.ui.result.qualityUnsuitable}</strong><br>
       ${quality.issues.map((issue) => `<span>${issue}</span>`).join("、")}
     `;
     els.ranking.innerHTML = "";
     els.questionBox.classList.add("hidden");
     els.actionPlan.innerHTML = `<ol>${guidance.map((item) => `<li>${item}</li>`).join("")}</ol>`;
     els.feedbackBox.innerHTML = "";
-    els.liveQuality.textContent = "需要重录";
-    els.recordState.textContent = "分析完成";
+    els.liveQuality.textContent = COPY.ui.capture.needsRerecord;
+    els.recordState.textContent = COPY.ui.capture.done;
     return;
   }
 
   const top = ranking[0];
   const second = ranking[1];
   const support = core.getDecisionSupport(features, analysis);
-  const levelText = highAlertLevel === "high" ? "高" : highAlertLevel === "medium" ? "中" : "低";
-  els.analysisStatus.textContent = "已分析";
+  const levelText = COPY.ui.result.highAlertLevels[highAlertLevel] || COPY.ui.result.highAlertLevels.low;
+  const opening =
+    highAlertLevel === "high"
+      ? COPY.ui.result.openingHigh
+      : highAlertLevel === "medium"
+        ? COPY.ui.result.openingMedium
+        : COPY.ui.result.openingLow;
+  els.analysisStatus.textContent = COPY.ui.result.analyzed;
   els.actionStatus.textContent =
-    support.actionMode === "top2" && second ? `${labels[top.key]} / ${labels[second.key]}` : top ? labels[top.key] : "不确定";
-  els.liveQuality.textContent = `质量 ${Math.round(quality.score * 100)}%`;
-  els.recordState.textContent = "分析完成";
+    support.actionMode === "top2" && second ? `${labels[top.key]} / ${labels[second.key]}` : top ? labels[top.key] : COPY.ui.result.uncertain;
+  els.liveQuality.textContent = `${COPY.ui.capture.qualityPrefix} ${Math.round(quality.score * 100)}%`;
+  els.recordState.textContent = COPY.ui.capture.done;
   els.summary.className = `summary ${highAlertLevel}`;
   els.summary.innerHTML = `
-    <strong>${support.actionMode === "top2" ? "初判接近" : "最可能"}：</strong>${labels[top.key]} ${Math.round(top.score * 100)}%<br>
-    <strong>次可能：</strong>${labels[second.key]} ${Math.round(second.score * 100)}%<br>
-    <strong>置信度：</strong>${support.confidence.label}（差距 ${Math.round(support.confidence.margin * 100)} 个百分点）<br>
-    <strong>高警觉风险：</strong>${levelText}（${Math.round(highAlertScore * 100)}%）
-    <br><strong>依据：</strong>${support.evidence.join("；")}
-    ${quality.score < 0.58 ? `<br><strong>质量提示：</strong>${core.getQualityGuidance(quality)[0]}` : ""}
-    ${analysis.personalEvidence ? "<br><strong>个体化：</strong>已参考当前宝宝的历史反馈" : ""}
+    <p class="summary-lead">${opening}</p>
+    <strong>${support.actionMode === "top2" ? COPY.ui.result.close : COPY.ui.result.likely}：</strong>${labels[top.key]} ${Math.round(top.score * 100)}%<br>
+    <strong>${COPY.ui.result.second}：</strong>${labels[second.key]} ${Math.round(second.score * 100)}%<br>
+    <strong>${COPY.ui.result.confidence}：</strong>${support.confidence.label}（${COPY.ui.result.margin} ${Math.round(support.confidence.margin * 100)} ${COPY.ui.result.percentagePointUnit}）<br>
+    <strong>${COPY.ui.result.highAlert}：</strong>${levelText}（${Math.round(highAlertScore * 100)}%）
+    <br><strong>${COPY.ui.result.evidence}：</strong>${support.evidence.join("；")}
+    ${quality.score < 0.58 ? `<br><strong>${COPY.ui.result.qualityHint}：</strong>${core.getQualityGuidance(quality)[0]}` : ""}
+    ${analysis.personalEvidence ? `<br><strong>${COPY.ui.result.personalized}：</strong>${COPY.ui.result.personalEvidence}` : ""}
   `;
   renderRanking(ranking);
   renderQuestion(analysis.question);
@@ -551,73 +582,28 @@ function buildActionFlow(analysis) {
   if (analysis.highAlertLevel === "high") {
     return {
       mode: "safety",
-      note: "先按安全优先处理，别只当普通哭闹。",
-      steps: [
-        {
-          category: "discomfort",
-          title: "先排除危险信号",
-          time: "立即",
-          body: "测体温，检查是否摔碰、刚接种后异常、呼吸/肤色/精神状态异常。",
-          next: "有异常或持续尖锐哭，尽快联系医生。"
-        },
-        {
-          category: "discomfort",
-          title: "做身体和衣物检查",
-          time: "1-2 分钟",
-          body: "看尿布、冷热、衣物勒痕、头发缠绕手脚、皮肤红肿。",
-          next: "没有发现异常，再进入安抚和常规需求排查。"
-        }
-      ]
+      note: COPY.actionFlow.safetyNote,
+      steps: COPY.actionFlow.safetySteps.map((step) => ({ ...step }))
     };
   }
 
   if (support.actionMode === "top2" && top && second) {
     return {
       mode: "top2",
-      note: `${labels[top]} 和 ${labels[second]} 很接近，先做低成本、可快速验证的两步。`,
+      note: formatCopy(COPY.actionFlow.top2Note, { first: labels[top], second: labels[second] }),
       steps: uniqueCategories([top, second, "discomfort"]).map(categoryToStep)
     };
   }
 
   return {
     mode: "top1",
-    note: top ? `先验证最可能的“${labels[top]}”，没缓解再切换第二项。` : "先做低成本安抚和身体检查。",
+    note: top ? formatCopy(COPY.actionFlow.top1Note, { first: labels[top] }) : COPY.actionFlow.fallbackNote,
     steps: uniqueCategories([top, second, "discomfort"]).map(categoryToStep)
   };
 }
 
 function categoryToStep(category) {
-  const steps = {
-    hunger: {
-      category: "hunger",
-      title: "试喂奶",
-      time: "3-5 分钟",
-      body: "按需试喂，观察吸吮后哭声是否明显减弱。",
-      next: "没有缓解就先抱直拍嗝，不继续硬喂。"
-    },
-    gas: {
-      category: "gas",
-      title: "拍嗝/排气",
-      time: "3-5 分钟",
-      body: "抱直拍嗝，或轻柔做排气动作；刚喂完先保持竖抱。",
-      next: "没有缓解再回到吃奶、尿布冷热或困烦排查。"
-    },
-    tired: {
-      category: "tired",
-      title: "降低刺激并抱哄",
-      time: "5-10 分钟",
-      body: "降低灯光和声音，停止逗弄，抱哄或包裹安抚。",
-      next: "越哭越尖锐就停止强哄，回到体温和身体检查。"
-    },
-    discomfort: {
-      category: "discomfort",
-      title: "尿布/冷热/衣物检查",
-      time: "1-3 分钟",
-      body: "检查尿布、冷热、衣物勒痕、头发缠绕手脚和姿势不适。",
-      next: "发现异常先处理；没有异常再试喂奶或拍嗝。"
-    }
-  };
-  return steps[category] || steps.discomfort;
+  return { ...(COPY.actionFlow.steps[category] || COPY.actionFlow.steps.discomfort) };
 }
 
 function renderActionStep(step, index) {
@@ -632,8 +618,8 @@ function renderActionStep(step, index) {
       <p>${step.body}</p>
       <small>${step.next}</small>
       <div class="step-actions">
-        <button type="button" data-step-effective="${step.category}">这步有效</button>
-        <button type="button" data-step-unresolved="${step.category}">${attempted ? "已记下没缓解" : "这步没缓解"}</button>
+        <button type="button" data-step-effective="${step.category}">${COPY.ui.feedback.effective}</button>
+        <button type="button" data-step-unresolved="${step.category}">${attempted ? COPY.ui.feedback.unresolvedMarked : COPY.ui.feedback.unresolved}</button>
       </div>
     </article>
   `;
@@ -665,7 +651,7 @@ function recordUnresolvedAttempt(category) {
       }
     ];
   }
-  els.liveQuality.textContent = `已记下：${feedbackStore.feedbackActions[category]}没缓解`;
+  els.liveQuality.textContent = `${COPY.ui.feedback.attemptPrefix}：${feedbackStore.feedbackActions[category]}`;
   renderActionPlan(state.current);
   renderFeedbackAction();
 }
@@ -676,12 +662,12 @@ function uniqueCategories(categories) {
 
 function renderFeatures(features) {
   const values = {
-    durationSec: `${features.durationSec.toFixed(1)} 秒`,
-    validCrySec: `${features.validCrySec.toFixed(1)} 秒`,
+    durationSec: `${features.durationSec.toFixed(1)} ${COPY.ui.result.secondsUnit}`,
+    validCrySec: `${features.validCrySec.toFixed(1)} ${COPY.ui.result.secondsUnit}`,
     cryRatio: `${Math.round(features.cryRatio * 100)}%`,
     snrDb: `${features.snrDb.toFixed(1)} dB`,
-    pitchMedian: features.pitchMedian ? `${Math.round(features.pitchMedian)} Hz` : "不足",
-    pitchP90: features.pitchP90 ? `${Math.round(features.pitchP90)} Hz` : "不足",
+    pitchMedian: features.pitchMedian ? `${Math.round(features.pitchMedian)} Hz` : COPY.ui.result.insufficient,
+    pitchP90: features.pitchP90 ? `${Math.round(features.pitchP90)} Hz` : COPY.ui.result.insufficient,
     highBandRatio: `${Math.round(features.highBandRatio * 100)}%`,
     burstiness: `${Math.round(features.burstiness * 100)}%`,
     episodeCount: `${features.episodeCount}`,
@@ -695,7 +681,7 @@ function renderFeatures(features) {
 
 function renderEmptyFeatures() {
   els.features.innerHTML = Object.entries(featureLabels)
-    .map(([key, label]) => `<div class="feature"><span>${label}</span><strong>${key.includes("Sec") ? "0.0 秒" : "-"}</strong></div>`)
+    .map(([key, label]) => `<div class="feature"><span>${label}</span><strong>${key.includes("Sec") ? `0.0 ${COPY.ui.result.secondsUnit}` : "-"}</strong></div>`)
     .join("");
 }
 
@@ -707,10 +693,10 @@ function setStage(stage) {
 
 function renderRecentFeedback() {
   const items = feedbackStore.summarizeRecentSessions(loadSessions(), 5);
-  els.recentStatus.textContent = items.length ? `${items.length} 条` : "暂无";
+  els.recentStatus.textContent = items.length ? `${items.length} ${COPY.ui.result.itemUnit}` : COPY.ui.detail.none;
   if (!items.length) {
     els.recentFeedback.className = "recent-list empty-state";
-    els.recentFeedback.textContent = "当前宝宝保存反馈后会显示在这里。";
+    els.recentFeedback.textContent = COPY.ui.detail.recentEmpty;
     return;
   }
 
@@ -719,36 +705,38 @@ function renderRecentFeedback() {
 }
 
 function renderRecentItem(item) {
-  const predicted = item.top2 ? `${labels[item.top1] || item.top1} / ${labels[item.top2] || item.top2}` : labels[item.top1] || "未知";
-  const result = item.resolved ? item.reliefLabel : "未缓解";
-  const flags = [item.partial ? "部分" : "", item.recurred ? "复哭" : "", item.hasAudio ? "音频" : ""].filter(Boolean).join(" · ");
+  const predicted = item.top2 ? `${labels[item.top1] || item.top1} / ${labels[item.top2] || item.top2}` : labels[item.top1] || COPY.ui.detail.unknown;
+  const result = item.resolved ? item.reliefLabel : COPY.ui.feedback.unresolved;
+  const flags = [item.partial ? COPY.ui.detail.partial : "", item.recurred ? COPY.ui.detail.recurred : "", item.hasAudio ? COPY.ui.detail.audio : ""]
+    .filter(Boolean)
+    .join(" · ");
   return `
     <div class="recent-item">
       <div>
         <strong>${escapeHtml(predicted)}</strong>
-        <span>${formatTime(item.ts)} 初判</span>
+        <span>${formatTime(item.ts)} ${COPY.ui.result.firstPrediction}</span>
       </div>
       <div>
         <strong>${escapeHtml(item.actionLabel)}</strong>
         <span>${escapeHtml(result)}${flags ? ` · ${escapeHtml(flags)}` : ""}</span>
       </div>
-      <div class="recent-pill">${escapeHtml(item.highAlertLevel === "high" ? "高警觉" : item.highAlertLevel === "medium" ? "中警觉" : "低警觉")}</div>
+      <div class="recent-pill">${escapeHtml(item.highAlertLevel === "high" ? COPY.ui.detail.highAlert : item.highAlertLevel === "medium" ? COPY.ui.detail.mediumAlert : COPY.ui.detail.lowAlert)}</div>
     </div>
   `;
 }
 
 function renderError(message) {
   setStage("result");
-  els.analysisStatus.textContent = "出错";
-  els.actionStatus.textContent = "等待";
+  els.analysisStatus.textContent = COPY.ui.result.error;
+  els.actionStatus.textContent = COPY.ui.result.waiting;
   els.summary.className = "summary medium";
   els.summary.textContent = message;
   els.ranking.innerHTML = "";
   els.questionBox.classList.add("hidden");
-  els.actionPlan.textContent = "可以重新录音，或上传另一段音频。";
+  els.actionPlan.textContent = COPY.ui.result.retryAction;
   els.feedbackBox.classList.add("hidden");
-  els.recordState.textContent = "准备录音";
-  els.liveQuality.textContent = "等待哭声";
+  els.recordState.textContent = COPY.ui.capture.ready;
+  els.liveQuality.textContent = COPY.ui.capture.waitingCry;
 }
 
 function renderEnvironmentHint() {
@@ -759,7 +747,7 @@ function renderEnvironmentHint() {
   }
 
   els.environmentHint.classList.remove("hidden");
-  els.environmentHint.textContent = "当前地址不是安全上下文，手机浏览器可能禁止直接录音。可以先上传音频；发给别人测试时建议部署成 HTTPS 链接。";
+  els.environmentHint.textContent = COPY.ui.capture.environmentHint;
 }
 
 function renderFeedbackAction() {
@@ -772,8 +760,8 @@ function renderFeedbackAction() {
   els.feedbackBox.classList.remove("hidden");
   if (state.feedbackSaved) {
     els.feedbackBox.innerHTML = `
-      <p>已记录这次处理结果，并用于当前宝宝后续校准。</p>
-      <p class="feedback-note">当前宝宝数据可在“信号”面板导出。</p>
+      <p>${COPY.ui.feedback.saved}</p>
+      <p class="feedback-note">${COPY.ui.feedback.dataNote}</p>
     `;
     return;
   }
@@ -786,18 +774,18 @@ function renderFeedbackAction() {
   const ranked = state.current.ranking.map((item) => item.key).filter((key) => feedbackStore.feedbackActions[key]);
   const categories = [...new Set([...ranked, "hunger", "gas", "tired", "discomfort", "unresolved"])];
   const attemptNote = state.currentAttempts.length
-    ? `<p class="feedback-note">已记下没缓解：${state.currentAttempts.map((item) => feedbackStore.feedbackActions[item.actionCategory]).join("、")}。</p>`
+    ? `<p class="feedback-note">${COPY.ui.feedback.attemptPrefix}：${state.currentAttempts.map((item) => feedbackStore.feedbackActions[item.actionCategory]).join("、")}。</p>`
     : "";
 
   els.feedbackBox.innerHTML = `
-    <p>处理后点一下：这次哪一步最有效？</p>
+    <p>${COPY.ui.feedback.prompt}</p>
     ${attemptNote}
     <div class="feedback-actions">
       ${categories
         .map((category) => `<button type="button" data-action="${category}">${feedbackStore.feedbackActions[category]}</button>`)
         .join("")}
     </div>
-    <p class="feedback-note">只在本机保存，用来逐步校准当前宝宝。</p>
+    <p class="feedback-note">${COPY.ui.feedback.localNote}</p>
   `;
 
   els.feedbackBox.querySelectorAll("[data-action]").forEach((button) => {
@@ -816,13 +804,13 @@ function renderFeedbackAction() {
 function renderReliefOptions(actionCategory) {
   const reliefKeys = ["fast", "slow", "partial", "recurred", "unresolved"];
   els.feedbackBox.innerHTML = `
-    <p>已选：${feedbackStore.feedbackActions[actionCategory]}。多久缓解？</p>
+    <p>${formatCopy(COPY.ui.feedback.selected, { action: feedbackStore.feedbackActions[actionCategory] })}</p>
     <div class="feedback-actions compact">
       ${reliefKeys
         .map((key) => `<button type="button" data-relief="${key}">${feedbackStore.reliefOptions[key].label}</button>`)
         .join("")}
     </div>
-    <button type="button" class="text-btn" data-back="true">重选有效动作</button>
+    <button type="button" class="text-btn" data-back="true">${COPY.ui.feedback.back}</button>
   `;
 
   els.feedbackBox.querySelectorAll("[data-relief]").forEach((button) => {
@@ -884,19 +872,19 @@ async function saveFeedback(feedback) {
     window.setTimeout(() => renderAnalysis(state.current), 450);
   } catch (error) {
     els.feedbackBox.innerHTML = `
-      <p>这次反馈没有保存成功。</p>
-      <p class="feedback-note">可能是浏览器本地存储已满，可以先导出或清空当前宝宝反馈。</p>
+      <p>${COPY.ui.feedback.saveFailed}</p>
+      <p class="feedback-note">${COPY.ui.feedback.storageFull}</p>
     `;
   }
 }
 
 function renderFeedbackSaved(session) {
-  const relief = session.feedback.resolved ? session.feedback.reliefLabel : "没有缓解";
-  const audioText = session.audio ? "，已保留音频" : "";
-  const attemptText = session.attempts?.length ? `；也记下 ${session.attempts.length} 个未缓解尝试` : "";
+  const relief = session.feedback.resolved ? session.feedback.reliefLabel : COPY.ui.feedback.noRelief;
+  const audioText = session.audio ? COPY.ui.feedback.audioSaved : "";
+  const attemptText = session.attempts?.length ? formatCopy(COPY.ui.feedback.attemptSaved, { count: session.attempts.length }) : "";
   els.feedbackBox.innerHTML = `
-    <p>已记录：${session.feedback.actionLabel}，${relief}${attemptText}${audioText}。</p>
-    <p class="feedback-note">这条记录会影响当前宝宝后续相似哭声的排序。</p>
+    <p>${COPY.ui.feedback.savedPrefix}：${session.feedback.actionLabel}，${relief}${attemptText}${audioText}。</p>
+    <p class="feedback-note">${COPY.ui.feedback.savedNote}</p>
   `;
 }
 
@@ -948,7 +936,7 @@ async function exportBabyData() {
   link.click();
   link.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
-  els.liveQuality.textContent = `已导出 ${payload.counts.sessions} 条`;
+  els.liveQuality.textContent = formatCopy(COPY.ui.importExport.exported, { count: payload.counts.sessions });
 }
 
 async function importBabyData(file) {
@@ -995,12 +983,12 @@ async function importBabyData(file) {
       state.current = { ...state.current, ...updated };
       renderAnalysis(state.current);
     }
-    els.liveQuality.textContent = `已导入 ${imported.counts.sessions} 条`;
+    els.liveQuality.textContent = formatCopy(COPY.ui.importExport.imported, { count: imported.counts.sessions });
   } catch (error) {
-    els.liveQuality.textContent = "导入失败";
-    els.analysisStatus.textContent = "导入失败";
+    els.liveQuality.textContent = COPY.ui.importExport.importFailed;
+    els.analysisStatus.textContent = COPY.ui.importExport.importFailed;
     els.summary.className = "summary medium";
-    els.summary.textContent = error?.message || "导入文件无法识别。";
+    els.summary.textContent = error?.message || COPY.ui.importExport.importUnknown;
   }
 }
 
@@ -1010,9 +998,9 @@ function buildExportName(babyId) {
 }
 
 function formatTime(ts) {
-  if (!ts) return "未知时间";
+  if (!ts) return COPY.ui.detail.unknownTime;
   const date = new Date(ts);
-  if (Number.isNaN(date.getTime())) return "未知时间";
+  if (Number.isNaN(date.getTime())) return COPY.ui.detail.unknownTime;
   return `${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
 
@@ -1026,7 +1014,7 @@ function escapeHtml(value) {
 }
 
 function cleanBabyId() {
-  return (els.babyName.value || "宝宝").trim() || "宝宝";
+  return (els.babyName.value || COPY.ui.defaultBabyName).trim() || COPY.ui.defaultBabyName;
 }
 
 function scoreFeatures(features) {

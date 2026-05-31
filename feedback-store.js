@@ -1,18 +1,7 @@
-export const feedbackActions = {
-  hunger: "喂奶",
-  gas: "拍嗝/排气",
-  tired: "抱哄/睡眠",
-  discomfort: "尿布/冷热/衣物检查",
-  unresolved: "没有缓解"
-};
+import { COPY } from "./copy.js";
 
-export const reliefOptions = {
-  fast: { label: "5 分钟内明显缓解", reliefTimeSec: 300, resolved: true },
-  slow: { label: "10 分钟内才缓解", reliefTimeSec: 600, resolved: true },
-  partial: { label: "只是部分缓解", reliefTimeSec: null, resolved: true, partial: true },
-  recurred: { label: "缓解后又哭", reliefTimeSec: null, resolved: true, recurred: true },
-  unresolved: { label: "没有缓解", reliefTimeSec: null, resolved: false }
-};
+export const feedbackActions = COPY.feedbackActions;
+export const reliefOptions = COPY.reliefOptions;
 
 export function createSessionId(now = Date.now(), random = Math.random()) {
   return `yy_${now.toString(36)}_${Math.floor(random * 1e9).toString(36)}`;
@@ -149,10 +138,10 @@ export function exportPayload({
 
 export function normalizeImportedPayload(payload, options = {}) {
   if (!payload || typeof payload !== "object") {
-    throw new Error("导入文件不是有效的哭了么数据。");
+    throw new Error(COPY.ui.importExport.invalidData);
   }
   if (payload.schema && payload.schema !== "yingyu.feedback.v1") {
-    throw new Error("导入文件版本不支持。");
+    throw new Error(COPY.ui.importExport.unsupportedVersion);
   }
 
   const maxSessions = options.maxSessions ?? 300;
@@ -261,17 +250,11 @@ function normalizeFeedback(feedback = {}) {
 }
 
 function normalizeBabyProfile(profile = {}) {
-  const labels = {
-    "0-2w": "0-2 周",
-    "3-8w": "3-8 周",
-    "9-16w": "9-16 周",
-    preterm_or_uncertain: "早产/不确定"
-  };
-  const ageBucket = labels[profile?.ageBucket] ? profile.ageBucket : "";
+  const ageBucket = COPY.ageBucketLabels[profile?.ageBucket] ? profile.ageBucket : "";
   if (!ageBucket) return {};
   return {
     ageBucket,
-    ageLabel: labels[ageBucket],
+    ageLabel: COPY.ageBucketLabels[ageBucket],
     updatedAt: Number(profile.updatedAt) || 0
   };
 }
@@ -391,7 +374,7 @@ function mergeByKey(current, imported, keyFn, maxLength) {
 }
 
 function cleanBabyId(value) {
-  return (typeof value === "string" ? value.trim() : "").slice(0, 18) || "宝宝";
+  return (typeof value === "string" ? value.trim() : "").slice(0, 18) || COPY.ui.defaultBabyName;
 }
 
 function round(value) {

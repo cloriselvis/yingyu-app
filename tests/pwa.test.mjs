@@ -81,6 +81,7 @@ test("service worker caches core app shell resources", async () => {
     "./report.html",
     "./feedback-report.html",
     "./app.js",
+    "./copy.js",
     "./audio-core.js",
     "./live-quality.js",
     "./feedback-store.js",

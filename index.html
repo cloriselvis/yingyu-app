@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>哭了么 MVP</title>
+    <title>哭了么</title>
     <meta name="theme-color" content="#04796b" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./icon.svg" type="image/svg+xml" />
@@ -14,18 +14,19 @@
       <section class="workspace">
         <header class="topbar">
           <div>
-            <p class="eyebrow">0-4 月哭声辅助判断</p>
-            <h1>哭了么</h1>
+            <p class="eyebrow" data-copy="subtitle">0-4 月哭声辅助判断</p>
+            <h1 data-copy="brand">哭了么</h1>
           </div>
           <div class="baby-switcher" aria-label="当前宝宝">
-            <label for="babyName">宝宝</label>
+            <label for="babyName" data-copy="babyNameLabel">宝宝</label>
             <input id="babyName" maxlength="18" autocomplete="off" />
           </div>
         </header>
 
         <section class="release-notice" aria-label="测试版说明">
-          <strong>测试版</strong>
-          <span>只做哭声辅助排查，不做诊断；发热、摔碰、精神差或持续尖锐哭，请优先联系医生。录音默认只在本机分析，勾选“保留音频”后才会写入导出数据。<a href="./privacy.html">隐私与安全说明</a></span>
+          <strong data-copy="releaseTitle">测试版</strong>
+          <span data-copy="releaseShort">只做辅助排查，不替代医生。</span>
+          <a href="./privacy.html" data-copy="releaseLink">隐私与安全</a>
         </section>
 
         <section class="capture-panel" aria-label="录音分析">
@@ -33,32 +34,32 @@
             <canvas id="waveform" width="900" height="220" aria-hidden="true"></canvas>
             <div class="meter-overlay">
               <div>
-                <span id="recordState">准备录音</span>
+                <span id="recordState" data-copy="captureReady">准备录音</span>
                 <strong id="timer">00:00</strong>
               </div>
-              <div class="quality-pill" id="liveQuality">等待哭声</div>
+              <div class="quality-pill" id="liveQuality" data-copy="captureWaitingCry">等待哭声</div>
             </div>
           </div>
 
           <div class="controls">
             <button id="recordBtn" class="primary-btn" type="button" aria-label="开始录音">
               <span class="btn-icon">●</span>
-              <span>开始录音</span>
+              <span data-copy="recordButton">开始录音</span>
             </button>
             <button id="stopBtn" class="icon-btn" type="button" disabled aria-label="停止录音" title="停止录音">
               <span>■</span>
             </button>
           </div>
           <details class="secondary-capture">
-            <summary>录音不可用或需要留样</summary>
+            <summary data-copy="secondarySummary">录音不可用或需要留样</summary>
             <div class="secondary-controls">
               <label class="file-btn" for="audioFile">
-                <span>上传音频</span>
+                <span data-copy="uploadAudio">上传音频</span>
                 <input id="audioFile" type="file" accept="audio/*" />
               </label>
               <label class="audio-consent">
                 <input id="keepAudio" type="checkbox" />
-                <span>保留音频</span>
+                <span data-copy="keepAudio">保留音频</span>
               </label>
             </div>
           </details>
@@ -67,23 +68,23 @@
 
         <section id="contextPanel" class="context-panel hidden" aria-label="录音后确认">
           <div class="panel-title">
-            <h2>先确认几件事</h2>
-            <span id="contextStatus">待回答</span>
+            <h2 data-copy="contextTitle">先确认几件事</h2>
+            <span id="contextStatus" data-copy="contextPending">待回答</span>
           </div>
           <div id="contextQuestions" class="context-questions"></div>
           <div class="context-actions">
-            <button id="contextContinue" class="primary-btn" type="button" disabled>查看分析</button>
-            <button id="contextSkip" class="text-btn" type="button">跳过</button>
+            <button id="contextContinue" class="primary-btn" type="button" disabled data-copy="contextContinue">查看分析</button>
+            <button id="contextSkip" class="text-btn" type="button" data-copy="contextSkip">跳过</button>
           </div>
         </section>
 
         <section id="resultGrid" class="result-grid hidden">
           <article class="result-panel" aria-live="polite">
             <div class="panel-title">
-              <h2>初判</h2>
-              <span id="analysisStatus">未分析</span>
+              <h2 data-copy="analysisTitle">初判</h2>
+              <span id="analysisStatus" data-copy="notAnalyzed">未分析</span>
             </div>
-            <div id="summary" class="summary empty">
+            <div id="summary" class="summary empty" data-copy="resultEmpty">
               录 8-15 秒哭声后，我会先判断音频质量，再给出高警觉风险和最可能的两个原因。
             </div>
             <div id="ranking" class="ranking"></div>
@@ -91,11 +92,11 @@
 
           <article class="result-panel">
             <div class="panel-title">
-              <h2>下一步</h2>
-              <span id="actionStatus">等待结果</span>
+              <h2 data-copy="actionTitle">下一步</h2>
+              <span id="actionStatus" data-copy="waitingResult">等待结果</span>
             </div>
             <div id="questionBox" class="question-box hidden"></div>
-            <div id="actionPlan" class="action-plan">
+            <div id="actionPlan" class="action-plan" data-copy="waitingActionPlan">
               结果出来后，这里会显示优先处理步骤。
             </div>
             <div id="feedbackBox" class="feedback hidden"></div>
@@ -104,24 +105,24 @@
 
         <section id="detailPanel" class="detail-panel hidden">
           <div class="panel-title">
-            <h2>信号</h2>
+            <h2 data-copy="detailTitle">信号</h2>
             <div class="panel-actions">
-              <a href="./feedback-report.html" class="text-btn panel-link">反馈复盘</a>
+              <a href="./feedback-report.html" class="text-btn panel-link" data-copy="feedbackReport">反馈复盘</a>
               <label class="text-btn import-btn" for="importBaby">
-                导入宝宝数据
+                <span data-copy="importBaby">导入宝宝数据</span>
                 <input id="importBaby" type="file" accept="application/json,.json" />
               </label>
-              <button id="exportBaby" type="button" class="text-btn">导出当前宝宝数据</button>
-              <button id="resetBaby" type="button" class="text-btn">清空当前宝宝反馈</button>
+              <button id="exportBaby" type="button" class="text-btn" data-copy="exportBaby">导出当前宝宝数据</button>
+              <button id="resetBaby" type="button" class="text-btn" data-copy="resetBaby">清空当前宝宝反馈</button>
             </div>
           </div>
           <div id="features" class="features-grid"></div>
           <div class="recent-feedback">
             <div class="sub-title">
-              <h3>最近反馈</h3>
-              <span id="recentStatus">暂无</span>
+              <h3 data-copy="recentTitle">最近反馈</h3>
+              <span id="recentStatus" data-copy="recentNone">暂无</span>
             </div>
-            <div id="recentFeedback" class="recent-list empty-state">当前宝宝保存反馈后会显示在这里。</div>
+            <div id="recentFeedback" class="recent-list empty-state" data-copy="recentEmpty">当前宝宝保存反馈后会显示在这里。</div>
           </div>
         </section>
       </section>

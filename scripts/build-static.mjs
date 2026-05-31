@@ -12,6 +12,7 @@ const appAssets = [
   "styles.css",
   "report.css",
   "app.js",
+  "copy.js",
   "pwa.js",
   "sw.js",
   "audio-core.js",

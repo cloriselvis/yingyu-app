@@ -1,18 +1,18 @@
 :root {
   color-scheme: light;
-  --bg: #f5f7f8;
+  --bg: #f2f3f6;
   --surface: #ffffff;
-  --surface-strong: #f9fbfb;
-  --ink: #17211f;
-  --muted: #65736f;
-  --line: #dbe3e1;
-  --accent: #04796b;
-  --accent-strong: #02594e;
-  --blue: #2b6cb0;
+  --surface-strong: #f7f8fa;
+  --ink: #16181d;
+  --muted: #6a717c;
+  --line: #d9dde5;
+  --accent: #027a62;
+  --accent-strong: #075e4f;
+  --blue: #2563a8;
   --amber: #a16207;
   --red: #b42318;
   --green: #067647;
-  --shadow: 0 18px 50px rgba(30, 43, 40, 0.09);
+  --shadow: 0 10px 28px rgba(21, 28, 38, 0.08);
 }
 
 * {
@@ -22,9 +22,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(245, 247, 248, 0.95)),
-    var(--bg);
+  background: var(--bg);
   color: var(--ink);
   font-family:
     Inter, "Segoe UI", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont,
@@ -41,14 +39,14 @@ button {
 }
 
 .app-shell {
-  width: min(1180px, calc(100vw - 28px));
+  width: min(820px, calc(100vw - 28px));
   margin: 0 auto;
-  padding: 28px 0 40px;
+  padding: 18px 0 36px;
 }
 
 .workspace {
   display: grid;
-  gap: 16px;
+  gap: 12px;
 }
 
 .topbar {
@@ -71,8 +69,8 @@ p {
 }
 
 h1 {
-  font-size: clamp(34px, 5vw, 56px);
-  line-height: 1;
+  font-size: 36px;
+  line-height: 1.05;
   letter-spacing: 0;
 }
 
@@ -114,19 +112,27 @@ h2 {
 }
 
 .release-notice {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 10px;
-  align-items: start;
-  border: 1px solid rgba(4, 121, 107, 0.22);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  border: 1px solid rgba(2, 122, 98, 0.18);
   border-radius: 8px;
-  padding: 11px 12px;
-  background: #eef8f5;
-  color: #23433d;
-  line-height: 1.55;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--muted);
+  line-height: 1.35;
+  font-size: 13px;
+  box-shadow: none;
 }
 
 .release-notice strong {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 0 8px;
+  background: #eaf7f2;
   color: var(--accent-strong);
 }
 
@@ -136,29 +142,28 @@ h2 {
 
 .release-notice a {
   color: var(--accent-strong);
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .capture-panel {
-  padding: 14px;
+  padding: 12px;
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .meter-card {
   position: relative;
-  min-height: 220px;
+  min-height: 246px;
   overflow: hidden;
   border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(4, 121, 107, 0.08), rgba(43, 108, 176, 0.06)),
-    #eef5f3;
+  background: #f6faf9;
+  border: 1px solid #e2e8e6;
 }
 
 #waveform {
   width: 100%;
-  height: 220px;
+  height: 246px;
   display: block;
 }
 
@@ -182,7 +187,7 @@ h2 {
 }
 
 #timer {
-  font-size: 36px;
+  font-size: 42px;
   line-height: 1;
   letter-spacing: 0;
 }
@@ -208,7 +213,7 @@ h2 {
 }
 
 .controls .primary-btn {
-  min-width: 156px;
+  min-width: 176px;
   justify-content: center;
 }
 
@@ -228,7 +233,7 @@ h2 {
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  padding: 0 18px;
+  padding: 0 22px;
   background: var(--accent);
   color: #fff;
   font-weight: 700;
@@ -264,7 +269,7 @@ h2 {
 }
 
 .icon-btn {
-  width: 46px;
+  width: 44px;
   display: grid;
   place-items: center;
   border-color: var(--line);
@@ -308,7 +313,8 @@ h2 {
 
 .secondary-capture {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 13px;
+  justify-self: center;
 }
 
 .secondary-capture summary {
@@ -345,8 +351,8 @@ h2 {
 
 .result-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .context-panel,
@@ -379,6 +385,12 @@ h2 {
   background: var(--surface-strong);
   color: var(--ink);
   line-height: 1.58;
+}
+
+.summary-lead {
+  color: var(--ink);
+  font-weight: 700;
+  margin-bottom: 8px;
 }
 
 .summary.empty {
@@ -439,7 +451,7 @@ h2 {
   border: 1px solid rgba(43, 108, 176, 0.25);
   border-radius: 8px;
   padding: 12px;
-  background: #f3f8ff;
+  background: #f5f9ff;
   margin-bottom: 12px;
 }
 
@@ -454,7 +466,7 @@ h2 {
   border: 1px solid rgba(43, 108, 176, 0.24);
   border-radius: 8px;
   padding: 12px;
-  background: #f3f8ff;
+  background: #f5f9ff;
 }
 
 .context-options {
@@ -814,6 +826,10 @@ h2 {
   .app-shell {
     width: min(100vw - 18px, 720px);
     padding-top: 14px;
+  }
+
+  h1 {
+    font-size: 34px;
   }
 
   .topbar {

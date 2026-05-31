@@ -8,6 +8,7 @@ const required = [
   "index.html",
   "privacy.html",
   "app.js",
+  "copy.js",
   "audio-core.js",
   "live-quality.js",
   "feedback-store.js",
@@ -56,7 +57,7 @@ for (const asset of extractServiceWorkerAssets(sw)) {
 
 const entries = await readdir(dist, { withFileTypes: true });
 if (entries.some((entry) => entry.isDirectory())) throw new Error("dist must not contain nested directories.");
-if (entries.length !== 21) throw new Error(`Unexpected dist file count: ${entries.length}`);
+if (entries.length !== 22) throw new Error(`Unexpected dist file count: ${entries.length}`);
 
 console.error("Release check passed.");
 

@@ -1,3 +1,5 @@
+import { COPY, formatCopy } from "./copy.js";
+
 export const DEFAULT_AGE_CALIBRATION_STRENGTH = 0.5;
 
 export function analyzeSamples(samples, sampleRate) {
@@ -150,16 +152,10 @@ export function applyContextAnswersToAnalysis(analysis, answers = [], options = 
 export function getQualityGuidance(quality) {
   const issues = quality?.issues || [];
   const guidance = issues.map((issue) => {
-    if (issue === "录音少于 4 秒") return "录音时间太短：重新录 8-15 秒，尽量包含几次连续哭声。";
-    if (issue === "整体音量偏低") return "音量偏低：手机靠近宝宝 20-40 厘米，麦克风不要被手或衣物挡住。";
-    if (issue === "有效哭声不足") return "有效哭声太少：等宝宝正在哭时再录，至少保留 3 次呼气哭声。";
-    if (issue === "哭声占比偏低") return "哭声占比偏低：减少前后空白和安静等待，录宝宝正在哭的 8-15 秒。";
-    if (issue === "背景噪声偏强") return "背景噪声偏强：先关掉电视、音乐、白噪音或风扇，再靠近录。";
-    if (issue === "疑似成人声音干扰") return "疑似成人声音干扰：录音时先不要说话，让宝宝哭声单独进入麦克风。";
-    return `${issue}：建议重新录一段更清楚的哭声。`;
+    return COPY.quality.guidance[issue] || formatCopy(COPY.quality.fallbackGuidance, { issue });
   });
 
-  return guidance.length ? guidance : ["这段录音质量可以分析。"];
+  return guidance.length ? guidance : [COPY.quality.okGuidance];
 }
 
 export function getDecisionSupport(features, analysis, options = {}) {
@@ -189,7 +185,7 @@ export function getDecisionSupport(features, analysis, options = {}) {
       level,
       score: confidenceScore,
       margin,
-      label: level === "high" ? "较高" : level === "medium" ? "中等" : "偏低"
+      label: COPY.analysis.confidenceLabels[level] || COPY.analysis.confidenceLabels.low
     },
     actionMode: isSafetyAction(highAlertLevel, safetyActionLevel) ? "safety" : level === "low" && second ? "top2" : "top1",
     evidence: buildDecisionEvidence(features, analysis, top?.key)
@@ -267,13 +263,13 @@ export function clamp(value, min, maxValue) {
 
 function assessQuality(features) {
   const issues = [];
-  if (features.durationSec < 4) issues.push("录音少于 4 秒");
-  if (features.peakRms < 0.014) issues.push("整体音量偏低");
-  if (features.validCrySec < 2.2) issues.push("有效哭声不足");
-  if (features.cryRatio < 0.14) issues.push("哭声占比偏低");
-  if (features.snrDb < 5) issues.push("背景噪声偏强");
+  if (features.durationSec < 4) issues.push(COPY.quality.issues.tooShort);
+  if (features.peakRms < 0.014) issues.push(COPY.quality.issues.lowVolume);
+  if (features.validCrySec < 2.2) issues.push(COPY.quality.issues.notEnoughCry);
+  if (features.cryRatio < 0.14) issues.push(COPY.quality.issues.lowCryRatio);
+  if (features.snrDb < 5) issues.push(COPY.quality.issues.noisy);
   if (features.pitchMedian > 0 && features.pitchMedian < 220 && features.highBandRatio < 0.2) {
-    issues.push("疑似成人声音干扰");
+    issues.push(COPY.quality.issues.adultVoice);
   }
 
   const score = clamp01(
@@ -597,64 +593,59 @@ function applyAggregateBabyPrior(adjusted, evidence, history, knownCategories, n
 
 function buildDecisionEvidence(features, analysis, topKey) {
   const evidence = [];
+  const copy = COPY.decisionEvidence;
   if (analysis?.highAlertLevel === "high") {
-    evidence.push("尖锐度、持续性或爆发度偏高，先按高警觉流程排查。");
+    evidence.push(copy.highAlert);
   } else if (analysis?.highAlertLevel === "medium") {
-    evidence.push("高警觉风险不是低位，建议先回答安全追问。");
+    evidence.push(copy.mediumAlert);
   }
 
   if ((features?.quality?.score || 0) < 0.58) {
-    evidence.push("录音质量一般，结论需要更保守。");
+    evidence.push(copy.lowQuality);
   }
 
   if (topKey === "hunger") {
     if (features.episodeCount >= 4 && features.cryRatio >= 0.25 && features.cryRatio <= 0.68) {
-      evidence.push("哭声分段较清楚，节律相对重复。");
+      evidence.push(copy.hungerRhythm);
     }
     if ((features.pitchMedian || 0) >= 360 && (features.pitchMedian || 0) <= 680) {
-      evidence.push("中位音高处在普通需求哭声常见区间。");
+      evidence.push(copy.hungerPitch);
     }
   } else if (topKey === "gas") {
     if ((features.pitchP90 || 0) >= 620 || features.highBandRatio >= 0.22) {
-      evidence.push("高位音高或尖锐度偏高。");
+      evidence.push(copy.gasPitch);
     }
     if (features.irregularity >= 0.42) {
-      evidence.push("哭声不稳定度偏高，拍嗝/排气需要靠前排查。");
+      evidence.push(copy.gasIrregular);
     }
   } else if (topKey === "tired") {
     if (features.burstiness <= 0.48 || features.cryRatio >= 0.55) {
-      evidence.push("哭声更连续或爆发度较低，可能和困烦/过度刺激有关。");
+      evidence.push(copy.tiredContinuous);
     }
     if (features.highBandRatio >= 0.18) {
-      evidence.push("高频占比不低，需结合醒着多久判断。");
+      evidence.push(copy.tiredHighBand);
     }
   } else if (topKey === "discomfort") {
     if (features.irregularity >= 0.45 || features.longestEpisodeSec >= 1.5) {
-      evidence.push("哭声不稳定或单段持续较长，先排查身体和环境不适。");
+      evidence.push(copy.discomfortIrregular);
     }
     if (features.validCrySec >= 5) {
-      evidence.push("有效哭声持续时间较长，一般不适需要快速检查。");
+      evidence.push(copy.discomfortLong);
     }
   }
 
   if (analysis?.personalEvidence) {
-    evidence.push("已叠加当前宝宝历史反馈的个体化校准。");
+    evidence.push(copy.personal);
   }
 
   if (!evidence.length && topKey) {
-    evidence.push(`声学特征组合得分最高的是 ${needLabel(topKey)}。`);
+    evidence.push(formatCopy(copy.fallback, { label: needLabel(topKey) }));
   }
   return evidence.slice(0, 3);
 }
 
 function needLabel(key) {
-  const labels = {
-    hunger: "想吃奶",
-    gas: "拍嗝/胀气",
-    tired: "困烦/过度刺激",
-    discomfort: "一般不适"
-  };
-  return labels[key] || key || "未知";
+  return COPY.labels[key] || key || COPY.ui.detail.unknown;
 }
 
 function chooseContextQuestions(ranking, highAlertLevel, uncertainty, babyProfile = {}) {
@@ -665,15 +656,7 @@ function chooseContextQuestions(ranking, highAlertLevel, uncertainty, babyProfil
   };
 
   if (highAlertLevel === "high" || highAlertLevel === "medium") {
-    add({
-      id: "safety",
-      text: "是否伴随发热、摔碰、刚接种或精神状态异常？",
-      options: [
-        { label: "有", delta: { discomfort: 0.08 }, highAlertDelta: 0.25 },
-        { label: "没有", delta: {}, highAlertDelta: -0.08 },
-        { label: "不确定", delta: { discomfort: 0.04 }, highAlertDelta: 0.05 }
-      ]
-    });
+    add(cloneQuestion(COPY.questions.safety));
   }
 
   if (!normalizeAgeBucket(babyProfile.ageBucket)) {
@@ -731,153 +714,53 @@ function chooseContextQuestions(ranking, highAlertLevel, uncertainty, babyProfil
 }
 
 function ageQuestion() {
-  return {
-    id: "age_bucket",
-    text: "宝宝现在多大？",
-    options: [
-      {
-        label: "0-2 周",
-        delta: { hunger: 0.04, discomfort: 0.02 },
-        highAlertDelta: 0.04,
-        profilePatch: { ageBucket: "0-2w" }
-      },
-      {
-        label: "3-8 周",
-        delta: { gas: 0.03, tired: 0.02 },
-        highAlertDelta: 0.01,
-        profilePatch: { ageBucket: "3-8w" }
-      },
-      {
-        label: "9-16 周",
-        delta: { tired: 0.04, hunger: -0.02 },
-        highAlertDelta: 0,
-        profilePatch: { ageBucket: "9-16w" }
-      },
-      {
-        label: "早产/不确定",
-        delta: { discomfort: 0.04 },
-        highAlertDelta: 0.06,
-        profilePatch: { ageBucket: "preterm_or_uncertain" }
-      }
-    ]
-  };
+  return cloneQuestion(COPY.questions.ageBucket);
 }
 
 function feedingQuestion(babyProfile = {}) {
   const ageOptions = feedingOptionsForAge(normalizeAgeBucket(babyProfile.ageBucket));
-  if (ageOptions) {
-    return {
-      id: "feeding_timing",
-      text: "上次喂奶大概多久前？",
-      options: ageOptions
-    };
-  }
-
-  return {
-    id: "feeding_timing",
-    text: "上次喂奶大概多久前？",
-    options: [
-      { label: "45 分钟内", delta: { hunger: -0.14, gas: 0.1, discomfort: 0.04 } },
-      { label: "45-120 分钟", delta: { hunger: 0.1 } },
-      { label: "超过 2 小时/不确定", delta: { hunger: 0.12, gas: -0.03 } }
-    ]
-  };
+  return cloneQuestion({
+    ...COPY.questions.feedingTiming,
+    options: ageOptions || COPY.questions.feedingTiming.options
+  });
 }
 
 function awakeQuestion(babyProfile = {}) {
   const ageOptions = awakeOptionsForAge(normalizeAgeBucket(babyProfile.ageBucket));
-  if (ageOptions) {
-    return {
-      id: "awake_long",
-      text: "这次哭前醒着多久？",
-      options: ageOptions
-    };
-  }
-
-  return {
-    id: "awake_long",
-    text: "这次哭前醒着多久？",
-    options: [
-      { label: "超过 1 小时", delta: { tired: 0.22, hunger: -0.08, gas: -0.04 } },
-      { label: "30-60 分钟", delta: { tired: 0.06 } },
-      { label: "刚醒不久", delta: { hunger: 0.12, tired: -0.1 } }
-    ]
-  };
+  return cloneQuestion({
+    ...COPY.questions.awakeLong,
+    options: ageOptions || COPY.questions.awakeLong.options
+  });
 }
 
 function feedingOptionsForAge(ageBucket) {
-  const byAge = {
-    "0-2w": [
-      { label: "45 分钟内", delta: { hunger: -0.12, gas: 0.1, discomfort: 0.04 } },
-      { label: "45-120 分钟", delta: { hunger: 0.08 } },
-      { label: "超过 2 小时/不确定", delta: { hunger: 0.14, gas: -0.03 } }
-    ],
-    "3-8w": [
-      { label: "60 分钟内", delta: { hunger: -0.12, gas: 0.1, discomfort: 0.03 } },
-      { label: "1-3 小时", delta: { hunger: 0.08 } },
-      { label: "超过 3 小时/不确定", delta: { hunger: 0.13, gas: -0.03 } }
-    ],
-    "9-16w": [
-      { label: "90 分钟内", delta: { hunger: -0.1, gas: 0.08, discomfort: 0.02 } },
-      { label: "1.5-3 小时", delta: { hunger: 0.06 } },
-      { label: "超过 3 小时/不确定", delta: { hunger: 0.12, gas: -0.03 } }
-    ],
-    preterm_or_uncertain: [
-      { label: "45 分钟内", delta: { hunger: -0.1, gas: 0.09, discomfort: 0.05 } },
-      { label: "45-120 分钟", delta: { hunger: 0.06 } },
-      { label: "超过 2 小时/不确定", delta: { hunger: 0.12, discomfort: 0.02 } }
-    ]
-  };
-  return byAge[ageBucket] || null;
+  return COPY.questions.feedingByAge[ageBucket] || null;
 }
 
 function awakeOptionsForAge(ageBucket) {
-  const byAge = {
-    "0-2w": [
-      { label: "超过 45 分钟", delta: { tired: 0.2, hunger: -0.06, gas: -0.03 } },
-      { label: "20-45 分钟", delta: { tired: 0.04 } },
-      { label: "刚醒不久", delta: { hunger: 0.1, tired: -0.08 } }
-    ],
-    "3-8w": [
-      { label: "超过 1 小时", delta: { tired: 0.22, hunger: -0.08, gas: -0.04 } },
-      { label: "30-60 分钟", delta: { tired: 0.06 } },
-      { label: "刚醒不久", delta: { hunger: 0.12, tired: -0.1 } }
-    ],
-    "9-16w": [
-      { label: "超过 90 分钟", delta: { tired: 0.22, hunger: -0.08, gas: -0.04 } },
-      { label: "45-90 分钟", delta: { tired: 0.06 } },
-      { label: "刚醒不久", delta: { hunger: 0.1, tired: -0.1 } }
-    ],
-    preterm_or_uncertain: [
-      { label: "超过 45 分钟", delta: { tired: 0.18, discomfort: 0.04, hunger: -0.05 } },
-      { label: "20-45 分钟", delta: { tired: 0.04 } },
-      { label: "刚醒不久", delta: { hunger: 0.08, tired: -0.07 } }
-    ]
-  };
-  return byAge[ageBucket] || null;
+  return COPY.questions.awakeByAge[ageBucket] || null;
 }
 
 function gasQuestion() {
-  return {
-    id: "gas_signs",
-    text: "有没有拱背、蹬腿、吐奶或肚子紧？",
-    options: [
-      { label: "有", delta: { gas: 0.18, discomfort: -0.04 } },
-      { label: "没有", delta: { discomfort: 0.08, gas: -0.08 } },
-      { label: "不确定", delta: { gas: 0.03 } }
-    ]
-  };
+  return cloneQuestion(COPY.questions.gasSigns);
 }
 
 function bodyQuestion() {
+  return cloneQuestion(COPY.questions.bodyCheck);
+}
+
+function cloneQuestion(question) {
   return {
-    id: "body_check",
-    text: "尿布、冷热、衣物勒痕有明显不舒服吗？",
-    options: [
-      { label: "有", delta: { discomfort: 0.2, hunger: -0.06, tired: -0.04 } },
-      { label: "没有", delta: { discomfort: -0.08 } },
-      { label: "不确定", delta: { discomfort: 0.04 } }
-    ]
+    ...question,
+    options: (question.options || []).map(cloneOption)
+  };
+}
+
+function cloneOption(option) {
+  return {
+    ...option,
+    delta: { ...(option.delta || {}) },
+    profilePatch: option.profilePatch ? { ...option.profilePatch } : undefined
   };
 }
 
