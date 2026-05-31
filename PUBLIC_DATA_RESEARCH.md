@@ -10,6 +10,7 @@
 | EnesBabyCries | 已下载大包和特征数据 | 0.5、1.5、2.5、3.5 月纵向家庭录音，适合验证月龄校准、个体差异和“原因分类需谨慎”。 |
 | Mendeley `Infant's Cry Sound` | 已通过公开 API 下载 63 个文件，并转成 16 kHz mono wav | 标签为 hungry、tired、uncomfortable；`hunger` 子集可做小型回归基准，`uncomfortable` 标签过宽，需要人工抽听复核。 |
 | AxonData Infant Cry Detection sample | 已下载 Hugging Face 公开 sample 18 段音频，并转成 16 kHz mono wav | 不是原因分类数据，适合做 cry-positive 质量门控和高警觉抽听；当前摘要见 `AXON_INFANT_CRY_SAMPLE_RESULTS.md`。 |
+| DynamicSuperb Infant Crying Classification | 已下载 414 条 parquet 内嵌 CAF 音频并转成 16 kHz mono wav | 标签接近 Donate-a-Cry 风格但来源说明很少，适合作为弱标签质量门控和 Top-2 回归集；当前摘要见 `DYNAMICSUPERB_INFANT_CRYING_RESULTS.md`。 |
 
 ## 已尝试但需要授权或人工步骤
 
@@ -25,7 +26,6 @@
 | Baby Chillanto | 常见于论文，类别偏病理/疼痛/正常等，公开可得性不稳定；暂时只作为文献基准。 |
 | ChatterBaby | Pediatric Research 论文使用 691 名 0-24 月婴儿、pain/hungry/fussy 三类训练；UCLA 产品页面称重点是 hunger / pain / fussy。原始数据不公开，但它支持我们把 pain/high-alert 与普通需求分开。 |
 | Dunstan Baby Language | 常被论文引用，但公开数据来源和标签可靠性不够清楚；不作为近期算法基本盘。 |
-| DynamicSuperb Infant Crying Classification | Hugging Face 非 gated parquet，414 条 test 样本，字段含 audio/file/instruction/label；下一步需要解析 parquet 并核验标签定义和来源。 |
 | p-j-r-1-2-3 Baby-Cry-Classification | Hugging Face 非 gated audiofolder，约 1GB zip，数据卡信息很少；下载前先核验 zip 目录结构、标签和授权。 |
 
 ## 新增论文要点
@@ -46,6 +46,7 @@
 - Mendeley 的 `uncomfortable` 不能直接等同婴语 `discomfort`，更像“照护需求大桶”；这类数据要先人工抽听，再决定是否调 `discomfort/gas/hunger` 边界。
 - 跨数据源汇总见 `PUBLIC_AUDIO_BENCHMARKS.md`：Enes、Mendeley 和 Donate-a-Cry 要按各自标签定义单独看，不能汇总成一个产品准确率。
 - AxonData sample 进入 `report:cry-positive` 质量门控链路，18/18 通过可用性门控，但 8 段触发中警觉，需要抽听确认高警觉阈值是否过敏。
+- DynamicSuperb 414 条已进入弱标签评估：Top-2 73.1%，但拒判率 49%，且 `tired` Top-2 只有 6.3%；它更适合作为质量门控和疲劳类失败样本库，而不是准确率宣传材料。
 - 下一步优先把 EnesBabyCries、Mendeley、Donate-a-Cry 和 AxonData 的抽听包纳入常规复盘；如果拿到 ICSD 授权，再扩展哭声检测和质量门控评估入口。
 
 ## 来源

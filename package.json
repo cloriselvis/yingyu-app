@@ -12,6 +12,7 @@
     "benchmark:wav": "node scripts/benchmark-folder.mjs",
     "prepare:donateacry": "node scripts/prepare-donateacry.mjs",
     "prepare:mendeley": "node scripts/prepare-mendeley-infant-cry.mjs",
+    "prepare:dynamicsuperb": "node scripts/prepare-dynamicsuperb.mjs",
     "evaluate:donateacry": "node scripts/evaluate-donateacry.mjs",
     "report:results": "node scripts/report-results.mjs",
     "report:feedback": "node scripts/report-feedback.mjs",

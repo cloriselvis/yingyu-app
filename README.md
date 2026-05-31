@@ -181,10 +181,24 @@ npm run review:pack -- (Join-Path $root 'rows.jsonl') (Join-Path $root 'wav') --
 
 当前 Mendeley 评估摘要见 `MENDELEY_INFANT_CRY_RESULTS.md`。注意它的 `uncomfortable` 标签很宽，不能直接等同产品里的 `discomfort`。
 
+DynamicSuperb `Infant_Crying_Classification_Dataset` 准备和评估：
+
+```powershell
+$root = 'D:\量化\yingyu-data\research\dynamicsuperb-infant-crying-classification'
+$python = 'C:\Users\zsc\AppData\Local\Programs\Python\Python312\python.exe'
+$pyarrow = 'D:\量化\yingyu-data\python-packages'
+npm run prepare:dynamicsuperb -- (Join-Path $root 'test-00000-of-00001.parquet') --out $root --python $python --pyarrow-path $pyarrow --convert-wav
+npm run benchmark:wav -- (Join-Path $root 'wav') --out (Join-Path $root 'rows.jsonl') --labels (Join-Path $root 'labels.csv') --max-seconds 20
+npm run report:results -- (Join-Path $root 'rows.jsonl') --out (Join-Path $root 'report.md') --limit 40
+npm run review:pack -- (Join-Path $root 'rows.jsonl') (Join-Path $root 'wav') --out (Join-Path $root 'review-pack') --limit 30
+```
+
+当前 DynamicSuperb 评估摘要见 `DYNAMICSUPERB_INFANT_CRYING_RESULTS.md`。它的数据卡来源说明很少，先当弱标签工程集，不当独立准确率证据。
+
 跨公开数据源基本盘汇总：
 
 ```powershell
-npm run report:datasets -- --dataset "EnesBabyCries age-aware smoke=D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows-age-aware.jsonl" --dataset "Mendeley Infant Cry Sound=D:\量化\yingyu-data\research\mendeley-infant-cry-sound\rows.jsonl" --dataset "Donate-a-Cry clean age-coarse=D:\量化\yingyu-data\research\donateacry-clean\rows-age-coarse.jsonl" --out PUBLIC_AUDIO_BENCHMARKS.md --limit 30
+npm run report:datasets -- --dataset "EnesBabyCries age-aware smoke=D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows-age-aware.jsonl" --dataset "Mendeley Infant Cry Sound=D:\量化\yingyu-data\research\mendeley-infant-cry-sound\rows.jsonl" --dataset "Donate-a-Cry clean age-coarse=D:\量化\yingyu-data\research\donateacry-clean\rows-age-coarse.jsonl" --dataset "DynamicSuperb Infant Crying Classification=D:\量化\yingyu-data\research\dynamicsuperb-infant-crying-classification\rows.jsonl" --out PUBLIC_AUDIO_BENCHMARKS.md --limit 30
 ```
 
 当前汇总见 `PUBLIC_AUDIO_BENCHMARKS.md`。这个报告会把 Top-2、质量拒判、年龄追问、中/高警觉和多数类基线放在同一张表里，避免把标签不均衡数据源误读成真实准确率。
