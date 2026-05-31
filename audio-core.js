@@ -1,3 +1,5 @@
+export const DEFAULT_AGE_CALIBRATION_STRENGTH = 0.5;
+
 export function analyzeSamples(samples, sampleRate) {
   const durationSec = samples.length / sampleRate;
   const frameSize = 1024;
@@ -73,7 +75,7 @@ export function scoreAnalysis(features, options = {}) {
   const babyProfile = normalizeBabyProfile(options.babyProfile);
   let highAlertScore = scoreHighAlert(features);
   const baseScores = scoreNeeds(features, highAlertScore);
-  const ageAdjusted = applyAgeCalibration(baseScores, highAlertScore, babyProfile);
+  const ageAdjusted = applyAgeCalibration(baseScores, highAlertScore, babyProfile, options);
   highAlertScore = ageAdjusted.highAlertScore;
   const highAlertLevel = getHighAlertLevel(highAlertScore, options.highAlertThresholds);
   const personal = applyPersonalCalibration(ageAdjusted.scores, features, options.history || []);
@@ -887,9 +889,11 @@ function topQuestion(key, babyProfile = {}) {
   return null;
 }
 
-function applyAgeCalibration(scores, highAlertScore, babyProfile = {}) {
+function applyAgeCalibration(scores, highAlertScore, babyProfile = {}, options = {}) {
   const ageBucket = normalizeAgeBucket(babyProfile.ageBucket);
   if (!ageBucket) return { scores, highAlertScore };
+  const strength = clamp(Number(options.ageCalibrationStrength ?? DEFAULT_AGE_CALIBRATION_STRENGTH), 0, 3);
+  if (strength === 0) return { scores, highAlertScore };
 
   const priors = {
     "0-2w": { delta: { hunger: 0.035, discomfort: 0.02 }, highAlertDelta: 0.035 },
@@ -900,12 +904,12 @@ function applyAgeCalibration(scores, highAlertScore, babyProfile = {}) {
   const prior = priors[ageBucket];
   const adjusted = { ...scores };
   for (const [key, delta] of Object.entries(prior.delta)) {
-    adjusted[key] = clamp((adjusted[key] || 0) + delta, 0.02, 1);
+    adjusted[key] = clamp((adjusted[key] || 0) + delta * strength, 0.02, 1);
   }
 
   return {
     scores: normalizeScores(adjusted),
-    highAlertScore: clamp01(highAlertScore + prior.highAlertDelta)
+    highAlertScore: clamp01(highAlertScore + prior.highAlertDelta * strength)
   };
 }
 

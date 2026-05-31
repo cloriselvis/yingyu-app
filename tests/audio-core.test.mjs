@@ -438,10 +438,44 @@ test("known age profile changes timing thresholds and conservative safety calibr
   const olderAwake = older.contextQuestions.find((question) => question.id === "awake_long");
 
   assert.ok(newborn.highAlertScore > older.highAlertScore);
-  assert.ok(preterm.highAlertScore > older.highAlertScore + 0.05);
+  assert.ok(preterm.highAlertScore > older.highAlertScore + 0.025);
   assert.ok(newbornFeeding.options.some((option) => option.label === "超过 2 小时/不确定"));
   assert.ok(olderFeeding.options.some((option) => option.label === "超过 3 小时/不确定"));
   assert.ok(!olderAwake || olderAwake.options.some((option) => option.label === "超过 90 分钟"));
+});
+
+test("age calibration strength can be replayed without changing known-age questions", () => {
+  const features = {
+    durationSec: 10,
+    validCrySec: 5,
+    cryRatio: 0.46,
+    peakRms: 0.14,
+    avgActiveRms: 0.08,
+    noiseFloor: 0.005,
+    snrDb: 20,
+    episodeCount: 7,
+    avgEpisodeSec: 0.55,
+    longestEpisodeSec: 1.1,
+    pitchMedian: 520,
+    pitchP90: 590,
+    pitchSpread: 120,
+    zcrActive: 0.1,
+    burstiness: 0.42,
+    irregularity: 0.35,
+    spectralCentroid: 1200,
+    highBandRatio: 0.18,
+    veryHighBandRatio: 0.02,
+    quality: { usable: true, score: 0.9, issues: [] }
+  };
+  const noAge = core.scoreAnalysis(features);
+  const ageOff = core.scoreAnalysis(features, { babyProfile: { ageBucket: "0-2w" }, ageCalibrationStrength: 0 });
+  const currentAge = core.scoreAnalysis(features, { babyProfile: { ageBucket: "0-2w" }, ageCalibrationStrength: 1 });
+
+  assert.equal(ageOff.question?.id === "age_bucket", false);
+  assert.ok(Math.abs(ageOff.highAlertScore - noAge.highAlertScore) < 1e-9);
+  assert.ok(Math.abs(ageOff.scores.hunger - noAge.scores.hunger) < 1e-9);
+  assert.ok(currentAge.highAlertScore > ageOff.highAlertScore);
+  assert.ok(currentAge.scores.hunger > ageOff.scores.hunger);
 });
 
 test("quality guidance turns rejection issues into concrete recording advice", () => {

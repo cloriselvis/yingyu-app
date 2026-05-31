@@ -91,8 +91,9 @@ export function replayRow(row, config = {}) {
   }
 
   const features = featuresFromRow(row);
-  const analysis = scoreAnalysis(features, config);
-  const support = getDecisionSupport(features, analysis, config);
+  const scoreConfig = normalizeReplayConfig(row, config);
+  const analysis = scoreAnalysis(features, scoreConfig);
+  const support = getDecisionSupport(features, analysis, scoreConfig);
   const ranking = analysis.ranking || [];
 
   return {
@@ -115,6 +116,13 @@ export function replayRow(row, config = {}) {
 
 export function replayRows(rows, config = {}) {
   return rows.map((row) => replayRow(row, config));
+}
+
+function normalizeReplayConfig(row, config = {}) {
+  const { ignoreBabyProfile, ...scoreConfig } = config || {};
+  if (ignoreBabyProfile || scoreConfig.babyProfile) return scoreConfig;
+  const ageBucket = row?.babyProfile?.ageBucket || row?.ageBucket || "";
+  return ageBucket ? { ...scoreConfig, babyProfile: { ageBucket } } : scoreConfig;
 }
 
 export function compareReplayCandidates(rows, candidates = replayCandidates, options = {}) {

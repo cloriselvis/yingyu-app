@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import test from "node:test";
+import { compareAgeCalibration, createAgeCalibrationMarkdown } from "../age-calibration-sweep.js";
 import { compareReplayCandidates, createReplayComparisonMarkdown, replayRow } from "../offline-replay.js";
 
 const execFileAsync = promisify(execFile);
@@ -19,6 +20,15 @@ test("replayRow recomputes decisions from stored feature snapshots", () => {
   assert.ok(Number.isFinite(replayed.confidenceScore));
 });
 
+test("replayRow uses age context stored on benchmark rows", () => {
+  const config = { highAlertThresholds: { medium: 0.95, high: 0.99 } };
+  const noAge = replayRow(sampleRow({ ageBucket: "", questionId: "age_bucket" }), config);
+  const withAge = replayRow(sampleRow({ ageBucket: "9-16w", questionId: "age_bucket" }), config);
+
+  assert.equal(noAge.questionId, "age_bucket");
+  assert.notEqual(withAge.questionId, "age_bucket");
+});
+
 test("compareReplayCandidates renders candidate metric deltas", () => {
   const comparison = compareReplayCandidates([sampleRow(), sampleRow({ file: "b.wav", yingyuLabel: "gas", top1: "hunger", top2: "tired" })]);
   const markdown = createReplayComparisonMarkdown(comparison);
@@ -29,6 +39,19 @@ test("compareReplayCandidates renders candidate metric deltas", () => {
   assert.match(markdown, /离线复评分候选对比/);
   assert.match(markdown, /Top-2 Δ/);
   assert.match(markdown, /高警觉更克制/);
+});
+
+test("compareAgeCalibration renders age strength candidates", () => {
+  const rows = [sampleRow({ ageBucket: "0-2w" }), sampleRow({ file: "b.wav", ageBucket: "9-16w", yingyuLabel: "gas" })];
+  const comparison = compareAgeCalibration(rows);
+  const markdown = createAgeCalibrationMarkdown(comparison);
+
+  assert.equal(comparison.totalRows, 2);
+  assert.equal(comparison.ageRows, 2);
+  assert.ok(comparison.results.some((result) => result.key === "no_age"));
+  assert.ok(comparison.results.some((result) => result.key === "age_100"));
+  assert.match(markdown, /Age Calibration Sweep/);
+  assert.match(markdown, /Current age calibration/);
 });
 
 test("sweep-thresholds CLI writes a replay comparison report", async () => {
@@ -44,6 +67,27 @@ test("sweep-thresholds CLI writes a replay comparison report", async () => {
   const report = await readFile(reportPath, "utf8");
   assert.match(report, /婴语离线复评分候选对比/);
   assert.match(report, /候选概览/);
+});
+
+test("sweep-age CLI writes an age calibration report", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "yingyu-age-sweep-"));
+  const rowsPath = join(dir, "rows.jsonl");
+  const reportPath = join(dir, "age-sweep.md");
+  await writeFile(
+    rowsPath,
+    [sampleRow({ ageBucket: "0-2w" }), sampleRow({ file: "b.wav", ageBucket: "9-16w", yingyuLabel: "gas" })]
+      .map((row) => JSON.stringify(row))
+      .join("\n"),
+    "utf8"
+  );
+
+  await execFileAsync(process.execPath, ["scripts/sweep-age-calibration.mjs", rowsPath, "--out", reportPath], {
+    cwd: new URL("..", import.meta.url)
+  });
+
+  const report = await readFile(reportPath, "utf8");
+  assert.match(report, /Age Calibration Sweep/);
+  assert.match(report, /No age context/);
 });
 
 function sampleRow(overrides = {}) {

@@ -76,6 +76,7 @@ npm test
 - 当前宝宝历史反馈能改变相似哭声的排序。
 - 安全追问的“有异常”答案会提高高警觉等级。
 - 录完后缺少月龄档案时会追问月龄，并按 0-2 周、3-8 周、9-16 周、早产/不确定校准喂奶和清醒时长阈值。
+- 月龄只作为温和先验参与打分，当前默认校准强度为 0.5 倍；避免让月龄压过哭声本身。
 
 ## 批量音频验证
 
@@ -159,6 +160,7 @@ npm run prepare:enes-smoke -- D:\量化\yingyu-data\research\enesbabycries --out
 tar.exe -xf D:\量化\yingyu-data\research\enesbabycries\audio_EnesBabyCries1A_bouts.zip -C D:\量化\yingyu-data\research\enesbabycries\audio-smoke -T D:\量化\yingyu-data\research\enesbabycries\audio-smoke\extract-list.txt
 npm run benchmark:wav -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke --out D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows.jsonl --labels D:\量化\yingyu-data\research\enesbabycries\audio-smoke\labels-no-age.csv --max-seconds 20
 npm run benchmark:wav -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke --out D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows-age-aware.jsonl --labels D:\量化\yingyu-data\research\enesbabycries\audio-smoke\labels.csv --max-seconds 20
+npm run sweep:age -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows-age-aware.jsonl --out D:\量化\yingyu-data\research\enesbabycries\audio-smoke\age-sweep.md
 ```
 
 当前真实音频 smoke test 摘要见 `ENESBABYCRIES_AUDIO_SMOKE.md`。
@@ -170,6 +172,14 @@ npm run sweep:thresholds -- D:\path\to\rows.jsonl --out D:\path\to\threshold-rep
 ```
 
 这个命令不会重新解码音频，会直接比较当前规则、高警觉更克制/更敏感、更多 Top-2、更多单一初判等候选。它用来快速筛调参方向；候选真正进入产品前，仍要重新生成抽听包并人工复核。
+
+如果 `rows.jsonl` 包含 `ageBucket`，可以单独复跑月龄先验强度：
+
+```powershell
+npm run sweep:age -- D:\path\to\rows-age-aware.jsonl --out D:\path\to\age-sweep.md
+```
+
+这个报告会比较无月龄、0.25/0.5/0.75/1.0/1.25/1.5 倍月龄先验，重点看 Top-2、年龄追问数量、安全优先和高置信错判。
 
 生成离线抽听包：
 

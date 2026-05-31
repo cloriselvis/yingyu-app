@@ -24,9 +24,14 @@
 | Baby Chillanto | 常见于论文，类别偏病理/疼痛/正常等，公开可得性不稳定；暂时只作为文献基准。 |
 | ChatterBaby | Pediatric Research 论文使用 691 名 0-24 月婴儿、pain/hungry/fussy 三类训练；UCLA 产品页面称重点是 hunger / pain / fussy。原始数据不公开，但它支持我们把 pain/high-alert 与普通需求分开。 |
 | Dunstan Baby Language | 常被论文引用，但公开数据来源和标签可靠性不够清楚；不作为近期算法基本盘。 |
+| AxonData Infant Cry Detection Dataset | Hugging Face 卡片声称有 50+ 小时真实哭声音频和商业授权，但当前仓库显示 dataset viewer 为空、总文件很小，且 FAQ 明确没有 hunger/pain/discomfort 原因标签。只适合后续商业 cry detection/SED，不适合当前意图准确率评估。 |
 
 ## 新增论文要点
 
+- ICSD arXiv v3（2025-04-02）把任务定义为 infant cry and snoring detection，包含真实强标、弱标和合成强标子集。它对我们最有价值的是“哭声检测/分段/噪声鲁棒性”，不是 `hunger/gas/tired/discomfort` 原因分类。
+- InfantCryNet（ACML 2024，PMLR 2025）强调背景噪声和标注稀缺是婴儿哭声理解落地的核心问题，并用预训练音频模型、pooling、蒸馏和量化支持移动端部署。它支持我们的路线：先做端侧可跑的轻量规则/特征评估，后续再接后端 embedding 或压缩模型。
+- 2024 EMBC / IEEE JBHI 的 ICDR multi-task 路线把 detection 和 reasoning 联合训练，用跨任务数据缓解数据稀缺和跨婴儿泛化问题。对产品路线的启发是：不要只训练“原因分类器”，哭声检测、质量门控和原因推断应共享表示但分开评估。
+- 2024 Frontiers 的 Donate-a-Cry 研究明确使用 457 条 Donate-a-Cry 原始样本，类别极不均衡：hungry 382、tired 24、burping 8、belly pain 16、discomfort 27。这解释了为什么 Donate-a-Cry 只能做弱标签工程基准，不能当产品准确率承诺。
 - ChatterBaby / UCLA 路线把类别限制在 `hungry`、`pain`、`fussy`，并强调这三类相对不依赖发育阶段。对我们来说，`pain` 更应该进入高警觉/安全流程，而不是和 `hunger/gas/tired/discomfort` 平级排序。
 - Pediatric Research 的 colic 研究用 probabilistic random forest 区分 fussy / hungry / pain，并把 colic cry 与 pain cry 的声学相似性作为研究问题。这说明“持续尖锐痛哭”类场景需要安全优先，而不是只输出生活照护建议。
 - 2024 Sensors 的多数据集整合论文提到 Donate-a-Cry、Chillanto、ESC-50 等标签体系和数据量不均衡，直接合并会造成多类别和样本不平衡问题。我们后续合并公开数据时必须保留数据源、标签定义和年龄范围，不能混成一个总准确率。
@@ -45,7 +50,12 @@
 - Donate-a-Cry: https://github.com/gveres/donateacry-corpus
 - Mendeley Infant's Cry Sound: https://data.mendeley.com/datasets/hbppd883sd
 - ICSD: https://github.com/QingyuLiu0521/ICSD
+- ICSD arXiv: https://arxiv.org/abs/2408.10561
 - CryCeleb2023: https://huggingface.co/datasets/Ubenwa/CryCeleb2023
+- AxonData Infant Cry Detection Dataset: https://huggingface.co/datasets/AxonData/infant-cry-detection-dataset
+- InfantCryNet: https://arxiv.org/abs/2409.19689
+- Multi-task Infant Crying Detection and Reasoning: https://pubmed.ncbi.nlm.nih.gov/40039419/
+- Donate-a-Cry Frontiers interpretation paper: https://www.frontiersin.org/journals/artificial-intelligence/articles/10.3389/frai.2024.1337356/full
 - ChatterBaby: https://www.chatterbaby.org/
 - ChatterBaby / colic paper: https://www.nature.com/articles/s41390-019-0592-4
 - UCLA ChatterBaby overview: https://newsroom.ucla.edu/magazine/chatterbaby-app-artificial-intelligence-infant-cries

@@ -19,6 +19,7 @@
     "prepare:enes-smoke": "node scripts/prepare-enesbabycries-smoke.mjs",
     "review:pack": "node scripts/build-review-pack.mjs",
     "sweep:thresholds": "node scripts/sweep-thresholds.mjs",
+    "sweep:age": "node scripts/sweep-age-calibration.mjs",
     "test": "node --test"
   }
 }
