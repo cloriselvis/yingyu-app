@@ -2,6 +2,12 @@
 
 这是一个本地可跑的 0-4 月婴儿哭声辅助判断原型。
 
+当前测试链接：
+
+```text
+https://cloriselvis.github.io/yingyu-app/
+```
+
 ## 运行
 
 ```powershell
@@ -33,7 +39,7 @@ npm run check:release
 npm run package:release
 ```
 
-产物在 `D:\量化\yingyu-app\dist`，可部署到 Vercel、Netlify、Cloudflare Pages 等 HTTPS 静态托管服务。
+产物在 `D:\量化\yingyu-app\dist`，当前已部署到 GitHub Pages，也可部署到 Vercel、Netlify、Cloudflare Pages 等 HTTPS 静态托管服务。
 压缩包在 `D:\量化\yingyu-app\release`，适合网页后台手动上传。
 发给别人测试的步骤见 `DEPLOY.md`，群发文案见 `BETA_TEST_MESSAGE.md`。
 

@@ -107,7 +107,10 @@ test("static deployment files are configured", async () => {
   assert.match(vercel, /"outputDirectory": "dist"/);
   assert.match(netlify, /publish = "dist"/);
   assert.match(deploy, /HTTPS/);
+  assert.match(deploy, /https:\/\/cloriselvis\.github\.io\/yingyu-app\//);
   assert.match(beta, /测试链接/);
+  assert.match(beta, /https:\/\/cloriselvis\.github\.io\/yingyu-app\//);
+  assert.doesNotMatch(beta, /替换成你的测试链接/);
   assert.match(beta, /不是医疗诊断/);
   assert.match(workflow, /npm run check:release/);
 });

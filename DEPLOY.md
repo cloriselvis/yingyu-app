@@ -4,6 +4,12 @@
 
 发给别人用手机测试时，优先发 HTTPS 链接。局域网 `http://192.168.x.x:4173` 只能临时同 Wi-Fi 访问，移动端浏览器通常会拦截麦克风录音。
 
+当前 GitHub Pages 测试链接：
+
+```text
+https://cloriselvis.github.io/yingyu-app/
+```
+
 ## 推荐方式：静态托管
 
 这个原型是纯前端 PWA，音频在浏览器本地分析，不需要后端服务。可以部署到 Vercel、Cloudflare Pages、Netlify、GitHub Pages 或任意 HTTPS 静态站点。
@@ -47,10 +53,10 @@ D:\量化\yingyu-app\release
 3. 推送到 `main`，或手动运行 `Deploy static preview` workflow。
 4. Actions 会依次运行 `npm test`、`npm run build`、`npm run check:release`，通过后发布 `dist`。
 
-部署后把 HTTPS 地址发给测试者，例如：
+当前已经发布到：
 
 ```text
-https://your-yingyu-preview.example.com
+https://cloriselvis.github.io/yingyu-app/
 ```
 
 ## 临时方式：HTTPS 隧道
