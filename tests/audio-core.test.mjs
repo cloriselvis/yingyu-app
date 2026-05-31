@@ -334,7 +334,48 @@ test("tired risk is surfaced through awake-time question even when hunger ranks 
 
   assert.equal(analysis.ranking[0].key, "hunger");
   assert.equal(analysis.question?.id, "awake_long");
+  assert.ok(analysis.contextQuestions.some((question) => question.id === "awake_long"));
   assert.equal(updated.ranking[0].key, "tired");
+});
+
+test("context answers combine recent events before final ranking", () => {
+  const features = {
+    durationSec: 10,
+    validCrySec: 5.2,
+    cryRatio: 0.5,
+    peakRms: 0.14,
+    avgActiveRms: 0.08,
+    noiseFloor: 0.005,
+    snrDb: 20,
+    episodeCount: 7,
+    avgEpisodeSec: 0.55,
+    longestEpisodeSec: 1.2,
+    pitchMedian: 520,
+    pitchP90: 600,
+    pitchSpread: 130,
+    zcrActive: 0.1,
+    burstiness: 0.48,
+    irregularity: 0.54,
+    spectralCentroid: 1300,
+    highBandRatio: 0.22,
+    veryHighBandRatio: 0.02,
+    quality: { usable: true, score: 0.88, issues: [] }
+  };
+  const analysis = core.scoreAnalysis(features);
+  const answers = analysis.contextQuestions
+    .map((question) => ({
+      option:
+        question.id === "feeding_timing"
+          ? question.options.find((option) => option.label === "45 分钟内")
+          : question.options.find((option) => option.label === "超过 1 小时")
+    }))
+    .filter((answer) => answer.option);
+  const updated = core.applyContextAnswersToAnalysis(analysis, answers);
+
+  assert.ok(analysis.contextQuestions.length >= 1);
+  assert.ok(updated.scores.hunger < analysis.scores.hunger);
+  assert.ok(updated.scores.tired > analysis.scores.tired || updated.scores.gas > analysis.scores.gas);
+  assert.equal(updated.contextQuestions.length, 0);
 });
 
 test("quality guidance turns rejection issues into concrete recording advice", () => {

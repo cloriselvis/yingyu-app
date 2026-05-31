@@ -17,11 +17,18 @@ const els = {
   liveQuality: document.querySelector("#liveQuality"),
   analysisStatus: document.querySelector("#analysisStatus"),
   actionStatus: document.querySelector("#actionStatus"),
+  contextPanel: document.querySelector("#contextPanel"),
+  contextStatus: document.querySelector("#contextStatus"),
+  contextQuestions: document.querySelector("#contextQuestions"),
+  contextContinue: document.querySelector("#contextContinue"),
+  contextSkip: document.querySelector("#contextSkip"),
+  resultGrid: document.querySelector("#resultGrid"),
   summary: document.querySelector("#summary"),
   ranking: document.querySelector("#ranking"),
   questionBox: document.querySelector("#questionBox"),
   actionPlan: document.querySelector("#actionPlan"),
   feedbackBox: document.querySelector("#feedbackBox"),
+  detailPanel: document.querySelector("#detailPanel"),
   features: document.querySelector("#features"),
   recentFeedback: document.querySelector("#recentFeedback"),
   recentStatus: document.querySelector("#recentStatus"),
@@ -65,6 +72,8 @@ const state = {
   current: null,
   adjustedByQuestion: false,
   questionAnswer: null,
+  pendingContextQuestions: [],
+  contextAnswers: [],
   currentAttempts: [],
   pendingFeedbackAction: null,
   feedbackSaved: false,
@@ -78,6 +87,7 @@ init();
 function init() {
   els.babyName.value = localStorage.getItem("yingyu:lastBaby") || "宝宝";
   els.keepAudio.checked = localStorage.getItem("yingyu:keepAudio") === "1";
+  setStage("capture");
   drawIdleWave();
   renderEmptyFeatures();
   renderRecentFeedback();
@@ -112,6 +122,9 @@ function bindEvents() {
   els.keepAudio.addEventListener("change", () => {
     localStorage.setItem("yingyu:keepAudio", els.keepAudio.checked ? "1" : "0");
   });
+
+  els.contextContinue.addEventListener("click", () => finishContextQuestions(true));
+  els.contextSkip.addEventListener("click", () => finishContextQuestions(false));
 
   els.resetBaby.addEventListener("click", async () => {
     const sessionIds = loadSessions().map((session) => session.id).filter(Boolean);
@@ -151,6 +164,11 @@ async function getAudioContext() {
 
 async function startRecording() {
   try {
+    setStage("capture");
+    state.pendingContextQuestions = [];
+    state.contextAnswers = [];
+    state.adjustedByQuestion = false;
+    state.questionAnswer = null;
     if (!canUseMicrophone()) {
       renderError("当前地址不能直接录音。手机测试请用 HTTPS 链接；现在可以先上传音频。");
       return;
@@ -276,6 +294,8 @@ function analyzeSamplesDirect(samples, sampleRate, sourceName, options = {}) {
     };
     state.adjustedByQuestion = false;
     state.questionAnswer = null;
+    state.pendingContextQuestions = [];
+    state.contextAnswers = [];
     state.currentAttempts = [];
     state.pendingFeedbackAction = null;
     state.feedbackSaved = false;
@@ -283,7 +303,12 @@ function analyzeSamplesDirect(samples, sampleRate, sourceName, options = {}) {
     state.currentMimeType = options.mimeType || "";
     state.currentSourceName = sourceName;
     drawAnalyzedWave(samples);
-    renderAnalysis(state.current);
+    if (state.current.quality.usable && state.current.contextQuestions?.length) {
+      renderContextStage(state.current);
+    } else {
+      setStage("result");
+      renderAnalysis(state.current);
+    }
   } catch (error) {
     renderError(options.errorMessage || "测试样本分析失败，可以重新加载页面后再试。");
   }
@@ -325,6 +350,94 @@ function applyQuestionAnswer(option) {
     ...core.applyQuestionAnswerToAnalysis(state.current, option)
   };
   state.adjustedByQuestion = true;
+  renderAnalysis(state.current);
+}
+
+function renderContextStage(analysis) {
+  state.pendingContextQuestions = (analysis.contextQuestions || [analysis.question].filter(Boolean)).slice(0, 3);
+  state.contextAnswers = Array.from({ length: state.pendingContextQuestions.length }, () => null);
+
+  if (!state.pendingContextQuestions.length) {
+    finishContextQuestions(false);
+    return;
+  }
+
+  setStage("context");
+  els.recordState.textContent = "等待确认";
+  els.liveQuality.textContent = "补充信息";
+  renderContextQuestions();
+}
+
+function renderContextQuestions() {
+  els.contextQuestions.innerHTML = state.pendingContextQuestions
+    .map(
+      (question, questionIndex) => `
+        <article class="context-question">
+          <strong>${escapeHtml(question.text)}</strong>
+          <div class="context-options">
+            ${question.options
+              .map((option, optionIndex) => {
+                const selected = state.contextAnswers[questionIndex]?.optionIndex === optionIndex;
+                return `<button type="button" class="${selected ? "selected" : ""}" data-question-index="${questionIndex}" data-option-index="${optionIndex}">${escapeHtml(option.label)}</button>`;
+              })
+              .join("")}
+          </div>
+        </article>
+      `
+    )
+    .join("");
+
+  els.contextQuestions.querySelectorAll("[data-question-index]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const questionIndex = Number(button.dataset.questionIndex);
+      const optionIndex = Number(button.dataset.optionIndex);
+      const question = state.pendingContextQuestions[questionIndex];
+      const option = question?.options?.[optionIndex];
+      if (!question || !option) return;
+      state.contextAnswers[questionIndex] = {
+        questionId: question.id,
+        questionText: question.text,
+        optionIndex,
+        optionLabel: option.label,
+        option,
+        answeredAt: Date.now()
+      };
+      renderContextQuestions();
+    });
+  });
+
+  const answeredCount = state.contextAnswers.filter(Boolean).length;
+  els.contextStatus.textContent = `${answeredCount}/${state.pendingContextQuestions.length}`;
+  els.contextContinue.disabled = answeredCount < state.pendingContextQuestions.length;
+}
+
+function finishContextQuestions(useAnswers) {
+  if (!state.current) return;
+  const answers = useAnswers ? state.contextAnswers.filter(Boolean) : [];
+  if (answers.length) {
+    const updated = core.applyContextAnswersToAnalysis(state.current, answers);
+    state.current = {
+      ...state.current,
+      ...updated
+    };
+    state.questionAnswer = {
+      questionId: "context_bundle",
+      questionText: answers.map((answer) => answer.questionText).join(" / "),
+      optionLabel: answers.map((answer) => answer.optionLabel).join(" / "),
+      answeredAt: Date.now()
+    };
+    state.adjustedByQuestion = true;
+  } else {
+    state.current = {
+      ...state.current,
+      question: null,
+      contextQuestions: []
+    };
+    state.questionAnswer = null;
+    state.adjustedByQuestion = false;
+  }
+
+  setStage("result");
   renderAnalysis(state.current);
 }
 
@@ -576,6 +689,12 @@ function renderEmptyFeatures() {
     .join("");
 }
 
+function setStage(stage) {
+  els.contextPanel.classList.toggle("hidden", stage !== "context");
+  els.resultGrid.classList.toggle("hidden", stage !== "result");
+  els.detailPanel.classList.toggle("hidden", stage !== "result");
+}
+
 function renderRecentFeedback() {
   const items = feedbackStore.summarizeRecentSessions(loadSessions(), 5);
   els.recentStatus.textContent = items.length ? `${items.length} 条` : "暂无";
@@ -609,6 +728,7 @@ function renderRecentItem(item) {
 }
 
 function renderError(message) {
+  setStage("result");
   els.analysisStatus.textContent = "出错";
   els.actionStatus.textContent = "等待";
   els.summary.className = "summary medium";

@@ -30,14 +30,20 @@ test("main page includes recent feedback surface", async () => {
 
   assert.match(html, /recentFeedback/);
   assert.match(html, /最近反馈/);
+  assert.match(html, /contextPanel/);
+  assert.match(html, /resultGrid" class="result-grid hidden"/);
+  assert.match(html, /先确认几件事/);
   assert.match(html, /测试版/);
   assert.match(html, /environmentHint/);
   assert.match(html, /privacy\.html/);
   assert.match(css, /recent-item/);
   assert.match(css, /release-notice/);
   assert.match(css, /info-panel/);
+  assert.match(css, /context-question/);
   assert.match(app, /summarizeRecentSessions/);
   assert.match(app, /canUseMicrophone/);
+  assert.match(app, /finishContextQuestions/);
+  assert.match(app, /applyContextAnswersToAnalysis/);
 });
 
 test("privacy page explains local audio handling and safety boundary", async () => {

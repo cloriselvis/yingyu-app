@@ -76,7 +76,8 @@ export function scoreAnalysis(features, options = {}) {
   const personal = applyPersonalCalibration(baseScores, features, options.history || []);
   const ranking = rankScores(personal.scores);
   const uncertainty = ranking[1] ? 1 - (ranking[0].score - ranking[1].score) : 0;
-  const question = chooseQuestion(ranking, highAlertLevel, uncertainty);
+  const contextQuestions = chooseContextQuestions(ranking, highAlertLevel, uncertainty);
+  const question = contextQuestions[0] || null;
 
   return {
     quality,
@@ -86,7 +87,8 @@ export function scoreAnalysis(features, options = {}) {
     personalEvidence: personal.evidence,
     ranking,
     uncertainty,
-    question
+    question,
+    contextQuestions
   };
 }
 
@@ -106,7 +108,36 @@ export function applyQuestionAnswerToAnalysis(analysis, option, options = {}) {
     highAlertLevel,
     scores,
     ranking,
-    question: null
+    question: null,
+    contextQuestions: []
+  };
+}
+
+export function applyContextAnswersToAnalysis(analysis, answers = [], options = {}) {
+  const nextScores = { ...analysis.scores };
+  let highAlertScore = analysis.highAlertScore;
+
+  for (const answer of answers) {
+    const option = answer?.option || answer;
+    if (!option) continue;
+    for (const [key, delta] of Object.entries(option.delta || {})) {
+      nextScores[key] = clamp(nextScores[key] + delta, 0.02, 1);
+    }
+    highAlertScore = clamp01(highAlertScore + (option.highAlertDelta || 0));
+  }
+
+  highAlertScore = clamp01(highAlertScore);
+  const highAlertLevel = getHighAlertLevel(highAlertScore, options.highAlertThresholds);
+  const scores = normalizeScores(nextScores);
+  const ranking = rankScores(scores);
+
+  return {
+    highAlertScore,
+    highAlertLevel,
+    scores,
+    ranking,
+    question: null,
+    contextQuestions: []
   };
 }
 
@@ -620,9 +651,15 @@ function needLabel(key) {
   return labels[key] || key || "未知";
 }
 
-function chooseQuestion(ranking, highAlertLevel, uncertainty) {
+function chooseContextQuestions(ranking, highAlertLevel, uncertainty) {
+  const questions = [];
+  const add = (question) => {
+    if (!question || questions.some((item) => item.id === question.id)) return;
+    questions.push(question);
+  };
+
   if (highAlertLevel === "high" || highAlertLevel === "medium") {
-    return {
+    add({
       id: "safety",
       text: "是否伴随发热、摔碰、刚接种或精神状态异常？",
       options: [
@@ -630,7 +667,7 @@ function chooseQuestion(ranking, highAlertLevel, uncertainty) {
         { label: "没有", delta: {}, highAlertDelta: -0.08 },
         { label: "不确定", delta: { discomfort: 0.04 }, highAlertDelta: 0.05 }
       ]
-    };
+    });
   }
 
   const tired = ranking.find((item) => item.key === "tired");
@@ -643,65 +680,100 @@ function chooseQuestion(ranking, highAlertLevel, uncertainty) {
     (uncertainty >= 0.74 || top?.key === "hunger" || Math.abs((hunger?.score || 0) - tired.score) <= 0.12);
 
   if (tiredCouldMatter) {
-    return {
-      id: "awake_long",
-      text: "宝宝醒着大概多久了？",
-      options: [
-        { label: "超过 1 小时", delta: { tired: 0.22, hunger: -0.08, gas: -0.04 } },
-        { label: "刚醒不久", delta: { hunger: 0.12, tired: -0.1 } },
-        { label: "不确定", delta: { tired: 0.04 } }
-      ]
-    };
+    add(awakeQuestion());
   }
 
-  if (uncertainty < 0.83 || !ranking[1]) return null;
+  if (!ranking[1]) {
+    add(topQuestion(top?.key));
+    return questions.slice(0, 3);
+  }
 
   const pair = [ranking[0].key, ranking[1].key].sort().join("-");
   if (pair === "hunger-tired") {
-    return {
-      id: "awake_long",
-      text: "宝宝醒着大概多久了？",
-      options: [
-        { label: "超过 1 小时", delta: { tired: 0.22, hunger: -0.08, gas: -0.04 } },
-        { label: "刚醒不久", delta: { hunger: 0.12, tired: -0.1 } },
-        { label: "不确定", delta: { tired: 0.04 } }
-      ]
-    };
+    add(feedingQuestion());
+    add(awakeQuestion());
+  } else if (pair === "gas-hunger") {
+    add(feedingQuestion());
+    add(gasQuestion());
+  } else if (pair === "discomfort-gas") {
+    add(gasQuestion());
+    add(bodyQuestion());
+  } else if (pair === "discomfort-hunger") {
+    add(feedingQuestion());
+    add(bodyQuestion());
+  } else if (pair === "discomfort-tired") {
+    add(awakeQuestion());
+    add(bodyQuestion());
+  } else if (pair === "gas-tired") {
+    add(gasQuestion());
+    add(awakeQuestion());
   }
 
-  if (pair === "gas-hunger") {
-    return {
-      id: "fed_recently",
-      text: "刚才 1 小时内喂过吗？",
-      options: [
-        { label: "喂过", delta: { hunger: -0.16, gas: 0.16 } },
-        { label: "没喂过", delta: { hunger: 0.18, gas: -0.08 } },
-        { label: "不确定", delta: { discomfort: 0.04 } }
-      ]
-    };
+  if (uncertainty >= 0.83) {
+    add(topQuestion(top?.key));
   }
 
-  if (pair === "discomfort-gas") {
-    return {
-      id: "body_signs",
-      text: "有没有拱背、蹬腿、吐奶或肚子紧？",
-      options: [
-        { label: "有", delta: { gas: 0.18, discomfort: -0.05 } },
-        { label: "没有", delta: { discomfort: 0.12, gas: -0.08 } },
-        { label: "不确定", delta: {} }
-      ]
-    };
+  if (!questions.length) {
+    add(topQuestion(top?.key));
   }
 
+  return questions.filter(Boolean).slice(0, 3);
+}
+
+function feedingQuestion() {
   return {
-    id: "basic_check",
-    text: "最先想排查哪一项？",
+    id: "feeding_timing",
+    text: "上次喂奶大概多久前？",
     options: [
-      { label: "吃奶", delta: { hunger: 0.12 } },
-      { label: "拍嗝", delta: { gas: 0.12 } },
-      { label: "睡觉/抱哄", delta: { tired: 0.12 } }
+      { label: "45 分钟内", delta: { hunger: -0.14, gas: 0.1, discomfort: 0.04 } },
+      { label: "45-120 分钟", delta: { hunger: 0.1 } },
+      { label: "超过 2 小时/不确定", delta: { hunger: 0.12, gas: -0.03 } }
     ]
   };
+}
+
+function awakeQuestion() {
+  return {
+    id: "awake_long",
+    text: "这次哭前醒着多久？",
+    options: [
+      { label: "超过 1 小时", delta: { tired: 0.22, hunger: -0.08, gas: -0.04 } },
+      { label: "30-60 分钟", delta: { tired: 0.06 } },
+      { label: "刚醒不久", delta: { hunger: 0.12, tired: -0.1 } }
+    ]
+  };
+}
+
+function gasQuestion() {
+  return {
+    id: "gas_signs",
+    text: "有没有拱背、蹬腿、吐奶或肚子紧？",
+    options: [
+      { label: "有", delta: { gas: 0.18, discomfort: -0.04 } },
+      { label: "没有", delta: { discomfort: 0.08, gas: -0.08 } },
+      { label: "不确定", delta: { gas: 0.03 } }
+    ]
+  };
+}
+
+function bodyQuestion() {
+  return {
+    id: "body_check",
+    text: "尿布、冷热、衣物勒痕有明显不舒服吗？",
+    options: [
+      { label: "有", delta: { discomfort: 0.2, hunger: -0.06, tired: -0.04 } },
+      { label: "没有", delta: { discomfort: -0.08 } },
+      { label: "不确定", delta: { discomfort: 0.04 } }
+    ]
+  };
+}
+
+function topQuestion(key) {
+  if (key === "hunger") return feedingQuestion();
+  if (key === "gas") return gasQuestion();
+  if (key === "tired") return awakeQuestion();
+  if (key === "discomfort") return bodyQuestion();
+  return null;
 }
 
 function vectorSimilarity(a, b) {

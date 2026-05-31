@@ -60,7 +60,19 @@
           <div id="environmentHint" class="environment-hint hidden"></div>
         </section>
 
-        <section class="result-grid">
+        <section id="contextPanel" class="context-panel hidden" aria-label="录音后确认">
+          <div class="panel-title">
+            <h2>先确认几件事</h2>
+            <span id="contextStatus">待回答</span>
+          </div>
+          <div id="contextQuestions" class="context-questions"></div>
+          <div class="context-actions">
+            <button id="contextContinue" class="primary-btn" type="button" disabled>查看分析</button>
+            <button id="contextSkip" class="text-btn" type="button">跳过</button>
+          </div>
+        </section>
+
+        <section id="resultGrid" class="result-grid hidden">
           <article class="result-panel" aria-live="polite">
             <div class="panel-title">
               <h2>初判</h2>
@@ -85,7 +97,7 @@
           </article>
         </section>
 
-        <section class="detail-panel">
+        <section id="detailPanel" class="detail-panel hidden">
           <div class="panel-title">
             <h2>信号</h2>
             <div class="panel-actions">

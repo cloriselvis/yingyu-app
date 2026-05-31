@@ -104,6 +104,7 @@ h2 {
 }
 
 .capture-panel,
+.context-panel,
 .result-panel,
 .detail-panel {
   background: var(--surface);
@@ -315,6 +316,7 @@ h2 {
   gap: 16px;
 }
 
+.context-panel,
 .result-panel,
 .detail-panel {
   padding: 16px;
@@ -406,6 +408,54 @@ h2 {
   padding: 12px;
   background: #f3f8ff;
   margin-bottom: 12px;
+}
+
+.context-questions {
+  display: grid;
+  gap: 12px;
+}
+
+.context-question {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(43, 108, 176, 0.24);
+  border-radius: 8px;
+  padding: 12px;
+  background: #f3f8ff;
+}
+
+.context-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.context-options button {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.context-options button.selected {
+  border-color: rgba(4, 121, 107, 0.45);
+  background: #eef8f5;
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.context-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.context-actions .primary-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .question-options {
@@ -742,6 +792,7 @@ h2 {
   .features-grid,
   .feedback-actions,
   .feedback-actions.compact,
+  .context-options,
   .question-options,
   .release-notice,
   .step-actions {
