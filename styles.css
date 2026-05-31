@@ -204,6 +204,12 @@ h2 {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  justify-content: center;
+}
+
+.controls .primary-btn {
+  min-width: 156px;
+  justify-content: center;
 }
 
 .primary-btn,
@@ -298,6 +304,33 @@ h2 {
   width: 16px;
   height: 16px;
   accent-color: var(--accent);
+}
+
+.secondary-capture {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.secondary-capture summary {
+  width: fit-content;
+  cursor: pointer;
+  list-style: none;
+}
+
+.secondary-capture summary::-webkit-details-marker {
+  display: none;
+}
+
+.secondary-capture summary:hover {
+  color: var(--accent-strong);
+}
+
+.secondary-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
 }
 
 .environment-hint {

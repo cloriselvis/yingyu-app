@@ -48,15 +48,20 @@
             <button id="stopBtn" class="icon-btn" type="button" disabled aria-label="停止录音" title="停止录音">
               <span>■</span>
             </button>
-            <label class="file-btn" for="audioFile">
-              <span>上传音频</span>
-              <input id="audioFile" type="file" accept="audio/*" />
-            </label>
-            <label class="audio-consent">
-              <input id="keepAudio" type="checkbox" />
-              <span>保留音频</span>
-            </label>
           </div>
+          <details class="secondary-capture">
+            <summary>录音不可用或需要留样</summary>
+            <div class="secondary-controls">
+              <label class="file-btn" for="audioFile">
+                <span>上传音频</span>
+                <input id="audioFile" type="file" accept="audio/*" />
+              </label>
+              <label class="audio-consent">
+                <input id="keepAudio" type="checkbox" />
+                <span>保留音频</span>
+              </label>
+            </div>
+          </details>
           <div id="environmentHint" class="environment-hint hidden"></div>
         </section>
 

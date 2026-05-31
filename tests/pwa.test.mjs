@@ -33,6 +33,7 @@ test("main page includes recent feedback surface", async () => {
   assert.match(html, /contextPanel/);
   assert.match(html, /resultGrid" class="result-grid hidden"/);
   assert.match(html, /先确认几件事/);
+  assert.match(html, /录音不可用或需要留样/);
   assert.match(html, /测试版/);
   assert.match(html, /environmentHint/);
   assert.match(html, /privacy\.html/);
