@@ -15,6 +15,7 @@ export function buildEnesBabyCriesSmokePack(datasetCsvText, options = {}) {
     selection,
     extractList: selection.map((item) => item.file).join("\n") + (selection.length ? "\n" : ""),
     labelsCsv: createLabelsCsv(selection),
+    labelsNoAgeCsv: createLabelsNoAgeCsv(selection),
     metadataCsv: createMetadataCsv(selection),
     readme: createSmokeReadme(selection)
   };
@@ -39,6 +40,7 @@ export function selectSmokeSessions(rows, options = {}) {
     groups.get(key).push({
       file,
       ageMonth,
+      ageBucket: ageMonthToBucket(ageMonth),
       enesCause,
       baby: row.baby || "",
       yingyuLabel: comparableLabels[enesCause] || "",
@@ -54,6 +56,18 @@ export function selectSmokeSessions(rows, options = {}) {
 }
 
 function createLabelsCsv(selection) {
+  const rows = ["file,label,reason,ageBucket,ageMonth,enesCause"];
+  for (const item of selection) {
+    rows.push(
+      [item.file, item.yingyuLabel, `enes_${item.enesCause}_${item.ageMonth}m`, item.ageBucket, item.ageMonth, item.enesCause]
+        .map(csvCell)
+        .join(",")
+    );
+  }
+  return rows.join("\n") + "\n";
+}
+
+function createLabelsNoAgeCsv(selection) {
   const rows = ["file,label,reason"];
   for (const item of selection) {
     if (!item.yingyuLabel) continue;
@@ -63,10 +77,10 @@ function createLabelsCsv(selection) {
 }
 
 function createMetadataCsv(selection) {
-  const rows = ["file,age_month,enesCause,yingyuLabel,comparable,baby"];
+  const rows = ["file,age_month,ageBucket,enesCause,yingyuLabel,comparable,baby"];
   for (const item of selection) {
     rows.push(
-      [item.file, item.ageMonth, item.enesCause, item.yingyuLabel, item.comparable ? "1" : "0", item.baby]
+      [item.file, item.ageMonth, item.ageBucket, item.enesCause, item.yingyuLabel, item.comparable ? "1" : "0", item.baby]
         .map(csvCell)
         .join(",")
     );
@@ -84,13 +98,25 @@ function createSmokeReadme(selection) {
   lines.push("");
   lines.push("```powershell");
   lines.push("tar.exe -xf D:\\量化\\yingyu-data\\research\\enesbabycries\\audio_EnesBabyCries1A_bouts.zip -C . -T extract-list.txt");
-  lines.push("npm run benchmark:wav -- . --out rows.jsonl --labels labels.csv --max-seconds 20");
-  lines.push("npm run report:results -- rows.jsonl --out report.md");
+  lines.push("npm run benchmark:wav -- . --out rows.jsonl --labels labels-no-age.csv --max-seconds 20");
+  lines.push("npm run benchmark:wav -- . --out rows-age-aware.jsonl --labels labels.csv --max-seconds 20");
+  lines.push("npm run report:results -- rows-age-aware.jsonl --out report-age-aware.md");
   lines.push("```");
   lines.push("");
-  lines.push("Only `hunger` and `discomfort` are mapped to Yingyu labels. `loneliness` is retained as observation data, not a direct target label.");
+  lines.push(
+    "Every label row carries age context. Only `hunger` and `discomfort` are mapped to Yingyu labels; `loneliness` is retained as age-aware observation data, not a direct target label."
+  );
   lines.push("");
   return lines.join("\n");
+}
+
+function ageMonthToBucket(value) {
+  const ageMonth = Number(value);
+  if (!Number.isFinite(ageMonth)) return "";
+  if (ageMonth <= 0.5) return "0-2w";
+  if (ageMonth <= 1.5) return "3-8w";
+  if (ageMonth <= 3.5) return "9-16w";
+  return "";
 }
 
 function sortAgeCauseKey(a, b) {

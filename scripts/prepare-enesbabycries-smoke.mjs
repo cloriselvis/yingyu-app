@@ -19,6 +19,7 @@ const pack = buildEnesBabyCriesSmokePack(await readFile(csvFile, "utf8"), { perG
 await mkdir(outDir, { recursive: true });
 await writeFile(join(outDir, "extract-list.txt"), pack.extractList, "utf8");
 await writeFile(join(outDir, "labels.csv"), pack.labelsCsv, "utf8");
+await writeFile(join(outDir, "labels-no-age.csv"), pack.labelsNoAgeCsv, "utf8");
 await writeFile(join(outDir, "metadata.csv"), pack.metadataCsv, "utf8");
 await writeFile(join(outDir, "README.md"), pack.readme, "utf8");
 

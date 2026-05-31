@@ -15,10 +15,13 @@ test("buildEnesBabyCriesSmokePack selects balanced long bouts and labels compara
   assert.equal(pack.selection.length, 6);
   assert.match(pack.extractList, /a_hunger\.wav/);
   assert.match(pack.extractList, /c_lonely\.wav/);
-  assert.match(pack.labelsCsv, /a_hunger\.wav,hunger,enes_hunger_0.5m/);
-  assert.match(pack.labelsCsv, /b_discomfort\.wav,discomfort,enes_discomfort_0.5m/);
-  assert.doesNotMatch(pack.labelsCsv, /c_lonely\.wav/);
-  assert.match(pack.metadataCsv, /c_lonely\.wav,0.5,loneliness,,0,b1/);
+  assert.match(pack.labelsCsv, /file,label,reason,ageBucket,ageMonth,enesCause/);
+  assert.match(pack.labelsCsv, /a_hunger\.wav,hunger,enes_hunger_0.5m,0-2w,0.5,hunger/);
+  assert.match(pack.labelsCsv, /b_discomfort\.wav,discomfort,enes_discomfort_0.5m,0-2w,0.5,discomfort/);
+  assert.match(pack.labelsCsv, /c_lonely\.wav,,enes_loneliness_0.5m,0-2w,0.5,loneliness/);
+  assert.match(pack.labelsNoAgeCsv, /a_hunger\.wav,hunger,enes_hunger_0.5m/);
+  assert.doesNotMatch(pack.labelsNoAgeCsv, /c_lonely\.wav/);
+  assert.match(pack.metadataCsv, /c_lonely\.wav,0.5,0-2w,loneliness,,0,b1/);
   assert.match(pack.readme, /--max-seconds 20/);
 });
 
@@ -34,8 +37,9 @@ test("prepare-enesbabycries-smoke CLI writes extraction list and labels", async 
   });
 
   assert.match(await readFile(join(out, "extract-list.txt"), "utf8"), /a_hunger\.wav/);
-  assert.match(await readFile(join(out, "labels.csv"), "utf8"), /file,label,reason/);
-  assert.match(await readFile(join(out, "metadata.csv"), "utf8"), /file,age_month,enesCause/);
+  assert.match(await readFile(join(out, "labels.csv"), "utf8"), /file,label,reason,ageBucket,ageMonth,enesCause/);
+  assert.match(await readFile(join(out, "labels-no-age.csv"), "utf8"), /file,label,reason/);
+  assert.match(await readFile(join(out, "metadata.csv"), "utf8"), /file,age_month,ageBucket,enesCause/);
 });
 
 function sampleRows() {

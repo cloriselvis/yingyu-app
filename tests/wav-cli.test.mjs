@@ -90,6 +90,25 @@ test("benchmark-folder CLI writes one JSONL row per wav", async () => {
   assert.ok("veryHighBandRatio" in row);
 });
 
+test("benchmark-folder passes age context from label CSV into scoring", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "yingyu-bench-age-"));
+  const out = join(dir, "results.jsonl");
+  const labels = join(dir, "labels.csv");
+  await writeFile(join(dir, "cry.wav"), encodeWav16(synthCry(), sampleRate));
+  await writeFile(labels, "file,label,reason,ageMonth\ncry.wav,,manual_age,0.5\n", "utf8");
+
+  await execFileAsync(process.execPath, ["scripts/benchmark-folder.mjs", dir, "--out", out, "--labels", labels], {
+    cwd: new URL("..", import.meta.url)
+  });
+  const row = JSON.parse((await readFile(out, "utf8")).trim());
+
+  assert.equal(row.decoded, true);
+  assert.equal(row.comparable, false);
+  assert.equal(row.ageBucket, "0-2w");
+  assert.equal(row.ageLabel, "0-2 weeks");
+  assert.notEqual(row.questionId, "age_bucket");
+});
+
 test("benchmark-folder can limit analysis duration for long research recordings", async () => {
   const dir = await mkdtemp(join(tmpdir(), "yingyu-bench-trim-"));
   const out = join(dir, "results.jsonl");

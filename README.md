@@ -109,7 +109,7 @@ npm run benchmark:wav -- D:\path\to\dataset --out D:\path\to\results.jsonl
 npm run benchmark:wav -- D:\path\to\self-audio --out D:\path\to\self-rows.jsonl --labels D:\path\to\labels.json
 ```
 
-`labels.csv` 也支持，表头用 `file,label`。标签只用四类：`hunger`、`gas`、`tired`、`discomfort`。
+`labels.csv` 也支持，基础表头用 `file,label`。标签只用四类：`hunger`、`gas`、`tired`、`discomfort`。如果有月龄上下文，可以额外加 `ageBucket` 或 `ageMonth`；`ageMonth` 会自动映射到 `0-2w`、`3-8w`、`9-16w`，用于离线复现“录音后追问月龄再判断”的流程。
 
 这一步是为了接 Donate-a-Cry、Baby Chillanto 或自采样本时，能批量得到质量门控、高警觉分数、Top-2 排序、置信度、行动模式、动态追问 ID 和完整声学特征快照，包括有效哭声时长、哭声占比、信噪比、分段数、音高、频谱、高频占比、爆发度和不稳定度。
 
@@ -157,7 +157,8 @@ EnesBabyCries 真实音频 smoke test：
 ```powershell
 npm run prepare:enes-smoke -- D:\量化\yingyu-data\research\enesbabycries --out D:\量化\yingyu-data\research\enesbabycries\audio-smoke --per-group 2
 tar.exe -xf D:\量化\yingyu-data\research\enesbabycries\audio_EnesBabyCries1A_bouts.zip -C D:\量化\yingyu-data\research\enesbabycries\audio-smoke -T D:\量化\yingyu-data\research\enesbabycries\audio-smoke\extract-list.txt
-npm run benchmark:wav -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke --out D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows.jsonl --labels D:\量化\yingyu-data\research\enesbabycries\audio-smoke\labels.csv --max-seconds 20
+npm run benchmark:wav -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke --out D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows.jsonl --labels D:\量化\yingyu-data\research\enesbabycries\audio-smoke\labels-no-age.csv --max-seconds 20
+npm run benchmark:wav -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke --out D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows-age-aware.jsonl --labels D:\量化\yingyu-data\research\enesbabycries\audio-smoke\labels.csv --max-seconds 20
 ```
 
 当前真实音频 smoke test 摘要见 `ENESBABYCRIES_AUDIO_SMOKE.md`。
