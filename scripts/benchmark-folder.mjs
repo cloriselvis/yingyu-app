@@ -6,11 +6,15 @@ import { decodeWav } from "../wav-io.js";
 const root = process.argv[2];
 const outArgIndex = process.argv.indexOf("--out");
 const labelsArgIndex = process.argv.indexOf("--labels");
+const maxSecondsArgIndex = process.argv.indexOf("--max-seconds");
 const outFile = outArgIndex >= 0 ? process.argv[outArgIndex + 1] : "";
 const labelsFile = labelsArgIndex >= 0 ? process.argv[labelsArgIndex + 1] : "";
+const maxSeconds = maxSecondsArgIndex >= 0 ? Number(process.argv[maxSecondsArgIndex + 1]) : 0;
 
 if (!root) {
-  console.error("Usage: node scripts/benchmark-folder.mjs <folder> [--out results.jsonl] [--labels labels.json|labels.csv]");
+  console.error(
+    "Usage: node scripts/benchmark-folder.mjs <folder> [--out results.jsonl] [--labels labels.json|labels.csv] [--max-seconds 20]"
+  );
   process.exit(1);
 }
 
@@ -22,7 +26,8 @@ for await (const file of walk(root)) {
   const labelInfo = labelMap.get(normalizePath(relativeFile)) || null;
   try {
     const decoded = decodeWav(await readFile(file));
-    const features = analyzeSamples(decoded.samples, decoded.sampleRate);
+    const samples = limitSamples(decoded.samples, decoded.sampleRate, maxSeconds);
+    const features = analyzeSamples(samples, decoded.sampleRate);
     const analysis = scoreAnalysis(features);
     const support = getDecisionSupport(features, analysis);
     rows.push({
@@ -30,6 +35,8 @@ for await (const file of walk(root)) {
       parsed: true,
       decoded: true,
       comparable: Boolean(labelInfo),
+      sourceDurationSec: round(decoded.durationSec),
+      analyzedDurationSec: round(samples.length / decoded.sampleRate),
       yingyuLabel: labelInfo?.yingyuLabel || "",
       reasonLabel: labelInfo?.reasonLabel || "",
       sampleRate: decoded.sampleRate,
@@ -69,6 +76,12 @@ if (outFile) {
   await writeFile(outFile, output, "utf8");
 } else {
   process.stdout.write(output);
+}
+
+function limitSamples(samples, sampleRate, maxSeconds) {
+  if (!Number.isFinite(maxSeconds) || maxSeconds <= 0) return samples;
+  const maxLength = Math.max(1, Math.floor(sampleRate * maxSeconds));
+  return samples.length > maxLength ? samples.slice(0, maxLength) : samples;
 }
 
 console.error(`Analyzed ${rows.length} wav files.`);

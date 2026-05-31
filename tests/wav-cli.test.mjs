@@ -24,6 +24,19 @@ test("decodeWav reads 16-bit PCM and keeps analyzable samples", async () => {
   assert.equal(features.quality.usable, true);
 });
 
+test("decodeWav reads WAV extensible PCM from research datasets", async () => {
+  const samples = synthCry();
+  const wav = encodeWavExtensible16(samples, sampleRate);
+  const decoded = decodeWav(wav);
+  const features = analyzeSamples(decoded.samples, decoded.sampleRate);
+
+  assert.equal(decoded.sampleRate, sampleRate);
+  assert.equal(decoded.channelCount, 1);
+  assert.equal(decoded.bitsPerSample, 16);
+  assert.ok(Math.abs(decoded.durationSec - 6) < 0.01);
+  assert.equal(features.quality.usable, true);
+});
+
 test("analyze-wav CLI returns JSON analysis for a wav file", async () => {
   const dir = await mkdtemp(join(tmpdir(), "yingyu-wav-"));
   const wavPath = join(dir, "cry.wav");
@@ -77,6 +90,21 @@ test("benchmark-folder CLI writes one JSONL row per wav", async () => {
   assert.ok("veryHighBandRatio" in row);
 });
 
+test("benchmark-folder can limit analysis duration for long research recordings", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "yingyu-bench-trim-"));
+  const out = join(dir, "results.jsonl");
+  await writeFile(join(dir, "long.wav"), encodeWav16(synthCry(), sampleRate));
+
+  await execFileAsync(process.execPath, ["scripts/benchmark-folder.mjs", dir, "--out", out, "--max-seconds", "2"], {
+    cwd: new URL("..", import.meta.url)
+  });
+  const row = JSON.parse((await readFile(out, "utf8")).trim());
+
+  assert.equal(row.decoded, true);
+  assert.ok(row.sourceDurationSec > 5.9);
+  assert.ok(row.analyzedDurationSec <= 2.001);
+});
+
 function synthCry() {
   const samples = new Float32Array(sampleRate * 6);
   let phase = 0;
@@ -112,6 +140,34 @@ function encodeWav16(samples, rate) {
   for (let i = 0; i < samples.length; i += 1) {
     const value = Math.max(-1, Math.min(1, samples[i]));
     buffer.writeInt16LE(Math.round(value * 32767), 44 + i * 2);
+  }
+  return buffer;
+}
+
+function encodeWavExtensible16(samples, rate) {
+  const dataSize = samples.length * 2;
+  const buffer = Buffer.alloc(68 + dataSize);
+  buffer.write("RIFF", 0);
+  buffer.writeUInt32LE(60 + dataSize, 4);
+  buffer.write("WAVE", 8);
+  buffer.write("fmt ", 12);
+  buffer.writeUInt32LE(40, 16);
+  buffer.writeUInt16LE(65534, 20);
+  buffer.writeUInt16LE(1, 22);
+  buffer.writeUInt32LE(rate, 24);
+  buffer.writeUInt32LE(rate * 2, 28);
+  buffer.writeUInt16LE(2, 32);
+  buffer.writeUInt16LE(16, 34);
+  buffer.writeUInt16LE(22, 36);
+  buffer.writeUInt16LE(16, 38);
+  buffer.writeUInt32LE(1, 40);
+  Buffer.from("0100000000001000800000aa00389b71", "hex").copy(buffer, 44);
+  buffer.write("data", 60);
+  buffer.writeUInt32LE(dataSize, 64);
+
+  for (let i = 0; i < samples.length; i += 1) {
+    const value = Math.max(-1, Math.min(1, samples[i]));
+    buffer.writeInt16LE(Math.round(value * 32767), 68 + i * 2);
   }
   return buffer;
 }

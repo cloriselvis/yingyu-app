@@ -153,6 +153,15 @@ npm run report:enesbabycries -- D:\量化\yingyu-data\research\enesbabycries --o
 
 这份报告用于验证 0-4 月内声学特征随月龄变化，以及原因分类不应脱离上下文追问硬判。当前摘要见 `ENESBABYCRIES_RESULTS.md`，公开数据源盘点见 `PUBLIC_DATA_RESEARCH.md`。
 
+EnesBabyCries 真实音频 smoke test：
+```powershell
+npm run prepare:enes-smoke -- D:\量化\yingyu-data\research\enesbabycries --out D:\量化\yingyu-data\research\enesbabycries\audio-smoke --per-group 2
+tar.exe -xf D:\量化\yingyu-data\research\enesbabycries\audio_EnesBabyCries1A_bouts.zip -C D:\量化\yingyu-data\research\enesbabycries\audio-smoke -T D:\量化\yingyu-data\research\enesbabycries\audio-smoke\extract-list.txt
+npm run benchmark:wav -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke --out D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows.jsonl --labels D:\量化\yingyu-data\research\enesbabycries\audio-smoke\labels.csv --max-seconds 20
+```
+
+当前真实音频 smoke test 摘要见 `ENESBABYCRIES_AUDIO_SMOKE.md`。
+
 基于 `rows.jsonl` 的声学特征快照复跑候选规则：
 
 ```powershell

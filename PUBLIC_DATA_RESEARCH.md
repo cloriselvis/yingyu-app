@@ -22,8 +22,15 @@
 | 数据源/项目 | 当前判断 |
 | --- | --- |
 | Baby Chillanto | 常见于论文，类别偏病理/疼痛/正常等，公开可得性不稳定；暂时只作为文献基准。 |
-| ChatterBaby | 有论文和产品说明，训练集包含 pain / hunger / fussy，公开页面称包含大量婴儿声音；原始数据不公开。 |
+| ChatterBaby | Pediatric Research 论文使用 691 名 0-24 月婴儿、pain/hungry/fussy 三类训练；UCLA 产品页面称重点是 hunger / pain / fussy。原始数据不公开，但它支持我们把 pain/high-alert 与普通需求分开。 |
 | Dunstan Baby Language | 常被论文引用，但公开数据来源和标签可靠性不够清楚；不作为近期算法基本盘。 |
+
+## 新增论文要点
+
+- ChatterBaby / UCLA 路线把类别限制在 `hungry`、`pain`、`fussy`，并强调这三类相对不依赖发育阶段。对我们来说，`pain` 更应该进入高警觉/安全流程，而不是和 `hunger/gas/tired/discomfort` 平级排序。
+- Pediatric Research 的 colic 研究用 probabilistic random forest 区分 fussy / hungry / pain，并把 colic cry 与 pain cry 的声学相似性作为研究问题。这说明“持续尖锐痛哭”类场景需要安全优先，而不是只输出生活照护建议。
+- 2024 Sensors 的多数据集整合论文提到 Donate-a-Cry、Chillanto、ESC-50 等标签体系和数据量不均衡，直接合并会造成多类别和样本不平衡问题。我们后续合并公开数据时必须保留数据源、标签定义和年龄范围，不能混成一个总准确率。
+- 2026 pain-assessment review 总结了公开 neonatal/infant cry 数据集，也指出许多研究样本小、录音环境受控，年龄、临床状态和背景噪声变化不足。这支持我们继续做公开数据 + 自采音频 + 真实家庭反馈三层验证。
 
 ## 对产品测试的影响
 
@@ -40,3 +47,7 @@
 - ICSD: https://github.com/QingyuLiu0521/ICSD
 - CryCeleb2023: https://huggingface.co/datasets/Ubenwa/CryCeleb2023
 - ChatterBaby: https://www.chatterbaby.org/
+- ChatterBaby / colic paper: https://www.nature.com/articles/s41390-019-0592-4
+- UCLA ChatterBaby overview: https://newsroom.ucla.edu/magazine/chatterbaby-app-artificial-intelligence-infant-cries
+- 2024 infant cry classification integration paper: https://www.mdpi.com/1424-8220/24/20/6575
+- Pain assessment review: https://www.mdpi.com/2504-4990/8/3/76

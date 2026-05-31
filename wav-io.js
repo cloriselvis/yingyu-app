@@ -25,6 +25,9 @@ export function decodeWav(buffer) {
         blockAlign: view.getUint16(chunkStart + 12, true),
         bitsPerSample: view.getUint16(chunkStart + 14, true)
       };
+      if (format.audioFormat === 65534) {
+        Object.assign(format, parseExtensibleFormat(view, chunkStart, chunkSize));
+      }
     }
 
     if (chunkId === "data") {
@@ -93,6 +96,33 @@ function readSample(view, offset, audioFormat, bitsPerSample) {
   }
 
   return view.getInt32(offset, true) / 2147483648;
+}
+
+function parseExtensibleFormat(view, chunkStart, chunkSize) {
+  if (chunkSize < 40 || chunkStart + 40 > view.byteLength) {
+    throw new Error("Invalid WAV extensible fmt chunk.");
+  }
+
+  const validBitsPerSample = view.getUint16(chunkStart + 18, true);
+  const subFormatTag = view.getUint32(chunkStart + 24, true);
+  const subFormatTail = readGuidTail(view, chunkStart + 28);
+  const pcmGuidTail = "00001000800000aa00389b71";
+  if (subFormatTail !== pcmGuidTail || ![1, 3].includes(subFormatTag)) {
+    throw new Error(`Unsupported WAV extensible subformat ${subFormatTag}.`);
+  }
+
+  return {
+    audioFormat: subFormatTag,
+    validBitsPerSample: validBitsPerSample || view.getUint16(chunkStart + 14, true)
+  };
+}
+
+function readGuidTail(view, offset) {
+  let value = "";
+  for (let i = 0; i < 12; i += 1) {
+    value += view.getUint8(offset + i).toString(16).padStart(2, "0");
+  }
+  return value;
 }
 
 function removeDcOffset(samples) {

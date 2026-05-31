@@ -205,7 +205,7 @@ export function createMarkdownReport(insights) {
     `- 多数类弱标签基线：Top-1 ${label(insights.majorityTop1)} ${percent(insights.majorityTop1Accuracy)}；Top-2 ${insights.majorityTop2.map(label).join(" + ")} ${percent(insights.majorityTop2Accuracy)}`
   );
   lines.push("");
-  lines.push("说明：Donate-a-Cry 是用户自标弱标签，这份报告用于工程调试和错误分析，不能当作产品准确率承诺。");
+  lines.push("说明：公开数据和自采音频的标签通常是弱标签，这份报告用于工程调试和错误分析，不能当作产品准确率承诺。");
   lines.push("");
 
   lines.push("## 算法基本盘检查");
