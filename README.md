@@ -205,6 +205,14 @@ npm run sweep:age -- D:\path\to\rows-age-aware.jsonl --out D:\path\to\age-sweep.
 
 这个报告会比较无月龄、0.25/0.5/0.75/1.0/1.25/1.5 倍月龄先验，重点看 Top-2、年龄追问数量、安全优先和高置信错判。
 
+如果数据只有“确认是婴儿哭声”的正样本、没有原因标签，用质量门控报告，不要放进 Top-1/Top-2 准确率汇总：
+
+```powershell
+npm run report:cry-positive -- D:\path\to\rows.jsonl --out D:\path\to\positive-cry-quality.md --limit 30
+```
+
+这个报告只看解码、可用率、拒判率、中/高警觉、安全模式、Top-1 倾向和首个追问，用于测试真实哭声会不会被质量门控误拒。
+
 生成离线抽听包：
 
 ```powershell

@@ -9,6 +9,7 @@
 | Donate-a-Cry | 已重跑 clean 子集无年龄/粗年龄两套评估 | 用户自标弱标签，适合做工程基准、质量门控、Top-2 和错判复盘；当前摘要见 `DONATEACRY_CLEAN_RESULTS.md`。 |
 | EnesBabyCries | 已下载大包和特征数据 | 0.5、1.5、2.5、3.5 月纵向家庭录音，适合验证月龄校准、个体差异和“原因分类需谨慎”。 |
 | Mendeley `Infant's Cry Sound` | 已通过公开 API 下载 63 个文件，并转成 16 kHz mono wav | 标签为 hungry、tired、uncomfortable；`hunger` 子集可做小型回归基准，`uncomfortable` 标签过宽，需要人工抽听复核。 |
+| AxonData Infant Cry Detection sample | 已下载 Hugging Face 公开 sample 18 段音频，并转成 16 kHz mono wav | 不是原因分类数据，适合做 cry-positive 质量门控和高警觉抽听；当前摘要见 `AXON_INFANT_CRY_SAMPLE_RESULTS.md`。 |
 
 ## 已尝试但需要授权或人工步骤
 
@@ -24,7 +25,8 @@
 | Baby Chillanto | 常见于论文，类别偏病理/疼痛/正常等，公开可得性不稳定；暂时只作为文献基准。 |
 | ChatterBaby | Pediatric Research 论文使用 691 名 0-24 月婴儿、pain/hungry/fussy 三类训练；UCLA 产品页面称重点是 hunger / pain / fussy。原始数据不公开，但它支持我们把 pain/high-alert 与普通需求分开。 |
 | Dunstan Baby Language | 常被论文引用，但公开数据来源和标签可靠性不够清楚；不作为近期算法基本盘。 |
-| AxonData Infant Cry Detection Dataset | Hugging Face 卡片声称有 50+ 小时真实哭声音频和商业授权，但当前仓库显示 dataset viewer 为空、总文件很小，且 FAQ 明确没有 hunger/pain/discomfort 原因标签。只适合后续商业 cry detection/SED，不适合当前意图准确率评估。 |
+| DynamicSuperb Infant Crying Classification | Hugging Face 非 gated parquet，414 条 test 样本，字段含 audio/file/instruction/label；下一步需要解析 parquet 并核验标签定义和来源。 |
+| p-j-r-1-2-3 Baby-Cry-Classification | Hugging Face 非 gated audiofolder，约 1GB zip，数据卡信息很少；下载前先核验 zip 目录结构、标签和授权。 |
 
 ## 新增论文要点
 
@@ -42,8 +44,9 @@
 - 近期最有价值的不是追逐一个“大而全准确率”，而是建立三类离线检查：哭声/非哭声质量门控、月龄校准是否改善阈值、Top-2 + 追问是否覆盖有效处理。
 - 公开数据标签来源差异很大，不能混在一起宣称统一准确率；每个数据源应单独报告标签定义、年龄范围、录音环境和可比较范围。
 - Mendeley 的 `uncomfortable` 不能直接等同婴语 `discomfort`，更像“照护需求大桶”；这类数据要先人工抽听，再决定是否调 `discomfort/gas/hunger` 边界。
-- 跨数据源汇总见 `PUBLIC_AUDIO_BENCHMARKS.md`：Enes 和 Mendeley 都未过 70% Top-2 gate，而且多数类 Top-2 基线接近 100%，说明当前公开弱标签更适合做回归和错判复盘，不适合汇总成一个产品准确率。
-- 下一步优先把 EnesBabyCries 和 Mendeley 的抽听包纳入常规复盘；如果拿到 ICSD 授权，再扩展哭声检测和质量门控评估入口。
+- 跨数据源汇总见 `PUBLIC_AUDIO_BENCHMARKS.md`：Enes、Mendeley 和 Donate-a-Cry 要按各自标签定义单独看，不能汇总成一个产品准确率。
+- AxonData sample 进入 `report:cry-positive` 质量门控链路，18/18 通过可用性门控，但 8 段触发中警觉，需要抽听确认高警觉阈值是否过敏。
+- 下一步优先把 EnesBabyCries、Mendeley、Donate-a-Cry 和 AxonData 的抽听包纳入常规复盘；如果拿到 ICSD 授权，再扩展哭声检测和质量门控评估入口。
 
 ## 来源
 
@@ -55,6 +58,8 @@
 - ICSD arXiv: https://arxiv.org/abs/2408.10561
 - CryCeleb2023: https://huggingface.co/datasets/Ubenwa/CryCeleb2023
 - AxonData Infant Cry Detection Dataset: https://huggingface.co/datasets/AxonData/infant-cry-detection-dataset
+- DynamicSuperb Infant Crying Classification Dataset: https://huggingface.co/datasets/DynamicSuperb/Infant_Crying_Classification_Dataset
+- Baby-Cry-Classification: https://huggingface.co/datasets/p-j-r-1-2-3/Baby-Cry-Classification
 - InfantCryNet: https://arxiv.org/abs/2409.19689
 - Multi-task Infant Crying Detection and Reasoning: https://pubmed.ncbi.nlm.nih.gov/40039419/
 - Donate-a-Cry Frontiers interpretation paper: https://www.frontiersin.org/journals/artificial-intelligence/articles/10.3389/frai.2024.1337356/full
