@@ -100,14 +100,14 @@ export function createReviewMarkdown(pack) {
   lines.push("");
   lines.push("## 抽听清单");
   lines.push("");
-  lines.push("| 分组 | 文件 | 弱标签 | Top-1 | Top-2 | 置信度 | 高警觉 | 质量 | 备注 |");
-  lines.push("| --- | --- | --- | --- | --- | ---: | --- | ---: | --- |");
+  lines.push("| 分组 | 文件 | 弱标签 | 来源标签 | 月龄 | Top-1 | Top-2 | 置信度 | 高警觉 | 质量 | 备注 |");
+  lines.push("| --- | --- | --- | --- | --- | --- | --- | ---: | --- | ---: | --- |");
   for (const item of pack.items) {
     lines.push(
-      `| ${cell(item.bucketLabel)} | ${cell(item.reviewFile || item.file)} | ${label(item.expected)} | ${label(item.top1)} | ${label(item.top2)} | ${percent(item.confidenceScore)} | ${cell(item.highAlertLevel)} | ${percent(item.qualityScore)} | ${cell(item.note)} |`
+      `| ${cell(item.bucketLabel)} | ${cell(item.reviewFile || item.file)} | ${label(item.expected)} | ${cell(item.reasonLabel)} | ${cell(ageText(item))} | ${label(item.top1)} | ${label(item.top2)} | ${percent(item.confidenceScore)} | ${cell(item.highAlertLevel)} | ${percent(item.qualityScore)} | ${cell(item.note)} |`
     );
   }
-  if (!pack.items.length) lines.push("| 暂无 | - | - | - | - | - | - | - | - |");
+  if (!pack.items.length) lines.push("| 暂无 | - | - | - | - | - | - | - | - | - | - |");
   lines.push("");
   return `${lines.join("\n").trim()}\n`;
 }
@@ -119,6 +119,10 @@ export function createReviewCsv(pack) {
     "file",
     "reviewFile",
     "expected",
+    "reasonLabel",
+    "ageBucket",
+    "ageLabel",
+    "comparable",
     "top1",
     "top1Score",
     "top2",
@@ -576,6 +580,9 @@ function toReviewItem(row, bucket) {
     missingAudio: false,
     expected: row.yingyuLabel || "",
     reasonLabel: row.reasonLabel || "",
+    ageBucket: row.ageBucket || row.babyProfile?.ageBucket || "",
+    ageLabel: row.ageLabel || "",
+    comparable: Boolean(row.comparable),
     top1: row.top1 || "",
     top1Score: round(row.top1Score),
     top2: row.top2 || "",
@@ -647,6 +654,9 @@ function createReviewCard(item, index) {
       <h2>${htmlEscape(item.bucketLabel)} · ${htmlEscape(item.reviewFile || item.file || "未命名音频")}</h2>
       <div class="badges">
         <span class="badge">弱标签 ${htmlEscape(label(item.expected))}</span>
+        <span class="badge">来源 ${htmlEscape(item.reasonLabel || "-")}</span>
+        <span class="badge">月龄 ${htmlEscape(ageText(item))}</span>
+        <span class="badge">${item.comparable ? "可比较" : "观察样本"}</span>
         <span class="badge">Top-1 ${htmlEscape(label(item.top1))}</span>
         <span class="badge">Top-2 ${htmlEscape(label(item.top2))}</span>
         <span class="badge ${attr(highAlertClass)}">高警觉 ${htmlEscape(item.highAlertLevel || "-")}</span>
@@ -664,6 +674,7 @@ function createReviewCard(item, index) {
     <div class="field"><span>质量问题</span><strong>${htmlEscape((item.qualityIssues || []).join("、") || "-")}</strong></div>
     <div class="field"><span>追问 ID</span><strong>${htmlEscape(item.questionId || "-")}</strong></div>
     <div class="field"><span>原始弱标签</span><strong>${htmlEscape(item.reasonLabel || "-")}</strong></div>
+    <div class="field"><span>月龄档案</span><strong>${htmlEscape(ageText(item))}</strong></div>
     <div class="field"><span>备注</span><strong>${htmlEscape(item.note || "-")}</strong></div>
     <div class="field"><span>有效哭声/占比</span><strong>${htmlEscape(featurePair(item.validCrySec, "s", item.cryRatio, ""))}</strong></div>
     <div class="field"><span>音高 P50/P90</span><strong>${htmlEscape(featurePair(item.pitchMedian, "Hz", item.pitchP90, "Hz"))}</strong></div>
@@ -899,6 +910,16 @@ function label(key) {
     discomfort: "一般不适"
   };
   return labels[key] || key || "-";
+}
+
+function ageText(item) {
+  const labels = {
+    "0-2w": "0-2 weeks",
+    "3-8w": "3-8 weeks",
+    "9-16w": "9-16 weeks",
+    preterm_or_uncertain: "preterm/uncertain"
+  };
+  return item.ageLabel || labels[item.ageBucket] || item.ageBucket || "-";
 }
 
 function round(value) {

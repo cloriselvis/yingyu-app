@@ -161,9 +161,23 @@ tar.exe -xf D:\量化\yingyu-data\research\enesbabycries\audio_EnesBabyCries1A_b
 npm run benchmark:wav -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke --out D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows.jsonl --labels D:\量化\yingyu-data\research\enesbabycries\audio-smoke\labels-no-age.csv --max-seconds 20
 npm run benchmark:wav -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke --out D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows-age-aware.jsonl --labels D:\量化\yingyu-data\research\enesbabycries\audio-smoke\labels.csv --max-seconds 20
 npm run sweep:age -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows-age-aware.jsonl --out D:\量化\yingyu-data\research\enesbabycries\audio-smoke\age-sweep.md
+npm run review:pack -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows-age-aware.jsonl D:\量化\yingyu-data\research\enesbabycries\audio-smoke --out D:\量化\yingyu-data\research\enesbabycries\review-age-aware --limit 20
 ```
 
 当前真实音频 smoke test 摘要见 `ENESBABYCRIES_AUDIO_SMOKE.md`。
+
+Mendeley `Infant's Cry Sound` 准备和评估：
+
+```powershell
+$root = 'D:\量化\yingyu-data\research\mendeley-infant-cry-sound'
+Invoke-WebRequest -Uri 'https://data.mendeley.com/public-api/datasets/hbppd883sd' -UseBasicParsing -Headers @{Accept='application/json'} -OutFile (Join-Path $root 'metadata.json')
+npm run prepare:mendeley -- (Join-Path $root 'metadata.json') --out $root --download --convert-wav
+npm run benchmark:wav -- (Join-Path $root 'wav') --out (Join-Path $root 'rows.jsonl') --labels (Join-Path $root 'labels.csv') --max-seconds 20
+npm run report:results -- (Join-Path $root 'rows.jsonl') --out (Join-Path $root 'report.md') --limit 30
+npm run review:pack -- (Join-Path $root 'rows.jsonl') (Join-Path $root 'wav') --out (Join-Path $root 'review-pack') --limit 30
+```
+
+当前 Mendeley 评估摘要见 `MENDELEY_INFANT_CRY_RESULTS.md`。注意它的 `uncomfortable` 标签很宽，不能直接等同产品里的 `discomfort`。
 
 基于 `rows.jsonl` 的声学特征快照复跑候选规则：
 

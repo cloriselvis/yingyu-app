@@ -16,6 +16,7 @@ npm run report:results -- D:\量化\yingyu-data\research\enesbabycries\audio-smo
 npm run benchmark:wav -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke --out D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows-age-aware.jsonl --labels D:\量化\yingyu-data\research\enesbabycries\audio-smoke\labels.csv --max-seconds 20
 npm run report:results -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows-age-aware.jsonl --out D:\量化\yingyu-data\research\enesbabycries\audio-smoke\report-age-aware.md --limit 20
 npm run sweep:age -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows-age-aware.jsonl --out D:\量化\yingyu-data\research\enesbabycries\audio-smoke\age-sweep.md --limit 20
+npm run review:pack -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows-age-aware.jsonl D:\量化\yingyu-data\research\enesbabycries\audio-smoke --out D:\量化\yingyu-data\research\enesbabycries\review-age-aware --limit 20
 ```
 
 ## 样本选择
@@ -45,12 +46,35 @@ npm run sweep:age -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke\ro
 
 月龄权重 sweep 保留在 `age-sweep.md`：0.5 倍月龄校准为当前最佳候选，Top-1 30.8%、Top-2 69.2%、0 条年龄追问；1.0 倍月龄校准 Top-2 降到 61.5%，说明不能让月龄先验压过声音本身。
 
+## 抽听包
+
+已生成 `D:\量化\yingyu-data\research\enesbabycries\review-age-aware\review.html`，用于人工抽听和标注：
+
+- 抽听样本：18
+- 音频复制：18 成功，0 缺失
+- Top-2 未覆盖：4
+- 中/高警觉：4
+- 质量拒判：2
+- Top-2 接近且覆盖：8
+
+Top-2 未覆盖样本清单：
+
+| file | 弱标签 | 来源标签 | 月龄 | Top-1 | Top-2 | 追问 | 质量 |
+| --- | --- | --- | --- | --- | --- | --- | ---: |
+| BM29_M_3_F_F_14112019_1221.wav | hunger | enes_hunger_2.5m | 9-16w | discomfort | gas | awake_long | 89.3% |
+| CA12_W_4_I_I_24042019_1141.wav | discomfort | enes_discomfort_3.5m | 9-16w | hunger | gas | safety | 100% |
+| BM29_M_2_I_I_09102019_1059.wav | discomfort | enes_discomfort_1.5m | 3-8w | hunger | gas | safety | 88.0% |
+| BM29_M_2_I_I_10102019_0754.wav | discomfort | enes_discomfort_1.5m | 3-8w | gas | hunger | awake_long | 81.4% |
+
+这里不把 4 个 Top-2 未覆盖直接等同“模型错”。下一步要人工听：如果哭段前 20 秒不含主要哭声、背景噪声/长 bout 裁剪影响明显，优先改采样/质量门控；如果弱标签听起来确实可信，再回头调 `discomfort` 与 `hunger/gas` 的边界。
+
 ## 发现的问题和修复
 
 - EnesBabyCries 的 wav 使用 `WAVE_FORMAT_EXTENSIBLE`，原解码器只支持普通 PCM/float，已补充 extensible PCM 支持。
 - 长 bout 和手机 8-15 秒录音不同，`benchmark:wav` 已新增 `--max-seconds 20`，用于模拟前端最多取前 20 秒分析。
 - `benchmark:wav` 现在可以从 `labels.csv/json` 读取 `ageBucket` 或 `ageMonth`，传给同一套 `scoreAnalysis` 月龄校准逻辑；离线测试不再把已知月龄样本错误地当成“需要先问年龄”。
 - Enes smoke 的 `labels.csv` 现在保留 `loneliness` 行的月龄上下文，但不把它计入可比较标签，避免为了提高数字强行合并标签体系。
+- 抽听包现在会显示月龄、来源标签和“可比较/观察样本”，避免把 `loneliness` 观察样本误算成原因分类错误。
 - 对于公开弱标签，Top-2 比 Top-1 更符合产品目标。这个 smoke test 不能证明准确率，只能证明离线链路可跑，并暴露质量门控和高警觉样本。
 - 初始 1.0 倍月龄先验让 Top-1 略升但 Top-2 略降；加入 `sweep:age` 后，把默认月龄校准改为 0.5 倍，保留 Top-2 覆盖，同时让追问从基础档案转向喂奶/睡醒/安全风险。
 

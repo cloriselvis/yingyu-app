@@ -19,13 +19,19 @@ test("buildReviewPack selects high-value offline audit buckets", () => {
   assert.equal(pack.buckets.rejected, 1);
   assert.equal(pack.buckets["top2-close-covered"], 1);
   assert.equal(pack.items.find((item) => item.file === "a.wav").snrDb, 16.2);
+  assert.equal(pack.items.find((item) => item.file === "a.wav").ageBucket, "3-8w");
+  assert.equal(pack.items.find((item) => item.file === "a.wav").comparable, true);
   assert.match(createReviewMarkdown(pack), /高置信错判/);
+  assert.match(createReviewMarkdown(pack), /来源标签/);
+  assert.match(createReviewMarkdown(pack), /3-8 weeks/);
   assert.match(createReviewCsv(pack), /snrDb/);
+  assert.match(createReviewCsv(pack), /ageBucket/);
   const html = createReviewHtml(pack);
   assert.match(html, /<audio controls/);
   assert.match(html, /导出标注 JSON/);
   assert.match(html, /localStorage/);
   assert.match(html, /音高 P50\/P90/);
+  assert.match(html, /月龄档案/);
 });
 
 test("build-review-pack CLI copies selected audio and writes manifests", async () => {
@@ -122,6 +128,8 @@ function row(overrides) {
     comparable: true,
     yingyuLabel: "hunger",
     reasonLabel: "self_label",
+    ageBucket: "3-8w",
+    ageLabel: "",
     qualityScore: 0.9,
     qualityIssues: [],
     highAlertLevel: "low",

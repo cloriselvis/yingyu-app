@@ -8,12 +8,12 @@
 | --- | --- | --- |
 | Donate-a-Cry | 已下载并已有评估脚本 | 用户自标弱标签，适合做工程基准、质量门控、Top-2 和错判复盘。 |
 | EnesBabyCries | 已下载大包和特征数据 | 0.5、1.5、2.5、3.5 月纵向家庭录音，适合验证月龄校准、个体差异和“原因分类需谨慎”。 |
+| Mendeley `Infant's Cry Sound` | 已通过公开 API 下载 63 个文件，并转成 16 kHz mono wav | 标签为 hungry、tired、uncomfortable；`hunger` 子集可做小型回归基准，`uncomfortable` 标签过宽，需要人工抽听复核。 |
 
 ## 已尝试但需要授权或人工步骤
 
 | 数据源 | 证据 | 下一步 |
 | --- | --- | --- |
-| Mendeley `Infant's Cry Sound` | 页面标注 CC BY 4.0，分类为 hungry、tired、uncomfortable；API zip 下载在当前环境返回 401。 | 后续可用浏览器人工下载或配置 Mendeley/Data API 授权，下载到 `D:\量化\yingyu-data\research\mendeley-infant-cry-sound`。 |
 | ICSD | 官方 GitHub 说明数据在 Hugging Face，需要 request access 和 token；任务是 infant cry/snoring detection，不是意图分类。 | 申请 Hugging Face 访问；拿到后用于哭声检测、噪声鲁棒性和分段质量门控。 |
 | Ubenwa CryCeleb2023 | Hugging Face 数据集需要同意共享联系信息；GitHub 仓库只有 SpeechBrain baseline 代码。 | 申请数据访问；主要用于 baby identity / speaker verification，不直接做意图分类。 |
 
@@ -41,7 +41,8 @@
 
 - 近期最有价值的不是追逐一个“大而全准确率”，而是建立三类离线检查：哭声/非哭声质量门控、月龄校准是否改善阈值、Top-2 + 追问是否覆盖有效处理。
 - 公开数据标签来源差异很大，不能混在一起宣称统一准确率；每个数据源应单独报告标签定义、年龄范围、录音环境和可比较范围。
-- 下一步优先把 EnesBabyCries 的年龄分层报告纳入常规复盘；如果拿到 ICSD/Mendeley 授权，再扩展批量评估入口。
+- Mendeley 的 `uncomfortable` 不能直接等同婴语 `discomfort`，更像“照护需求大桶”；这类数据要先人工抽听，再决定是否调 `discomfort/gas/hunger` 边界。
+- 下一步优先把 EnesBabyCries 和 Mendeley 的抽听包纳入常规复盘；如果拿到 ICSD 授权，再扩展哭声检测和质量门控评估入口。
 
 ## 来源
 
