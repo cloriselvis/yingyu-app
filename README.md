@@ -146,6 +146,13 @@ npm run report:results -- D:\path\to\rows.jsonl --out D:\path\to\report.md --lim
 
 当前基本盘检查项包括：可比较样本数、质量拒判率、Top-2 覆盖、Top-2 模式覆盖、高置信错判率和解码错误。这个阶段先用公开数据和自采音频判断算法是否值得继续打磨，不用真实家庭内测数据证明产品有效。
 
+EnesBabyCries 月龄分层复核：
+```powershell
+npm run report:enesbabycries -- D:\量化\yingyu-data\research\enesbabycries --out D:\量化\yingyu-data\research\enesbabycries\ENESBABYCRIES_REPORT.md
+```
+
+这份报告用于验证 0-4 月内声学特征随月龄变化，以及原因分类不应脱离上下文追问硬判。当前摘要见 `ENESBABYCRIES_RESULTS.md`，公开数据源盘点见 `PUBLIC_DATA_RESEARCH.md`。
+
 基于 `rows.jsonl` 的声学特征快照复跑候选规则：
 
 ```powershell

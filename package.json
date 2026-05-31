@@ -15,6 +15,7 @@
     "report:results": "node scripts/report-results.mjs",
     "report:feedback": "node scripts/report-feedback.mjs",
     "report:review": "node scripts/report-review.mjs",
+    "report:enesbabycries": "node scripts/report-enesbabycries.mjs",
     "review:pack": "node scripts/build-review-pack.mjs",
     "sweep:thresholds": "node scripts/sweep-thresholds.mjs",
     "test": "node --test"
