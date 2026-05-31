@@ -16,6 +16,7 @@
     "report:results": "node scripts/report-results.mjs",
     "report:feedback": "node scripts/report-feedback.mjs",
     "report:review": "node scripts/report-review.mjs",
+    "report:datasets": "node scripts/report-datasets.mjs",
     "report:enesbabycries": "node scripts/report-enesbabycries.mjs",
     "prepare:enes-smoke": "node scripts/prepare-enesbabycries-smoke.mjs",
     "review:pack": "node scripts/build-review-pack.mjs",

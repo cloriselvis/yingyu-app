@@ -179,6 +179,14 @@ npm run review:pack -- (Join-Path $root 'rows.jsonl') (Join-Path $root 'wav') --
 
 当前 Mendeley 评估摘要见 `MENDELEY_INFANT_CRY_RESULTS.md`。注意它的 `uncomfortable` 标签很宽，不能直接等同产品里的 `discomfort`。
 
+跨公开数据源基本盘汇总：
+
+```powershell
+npm run report:datasets -- --dataset "EnesBabyCries age-aware smoke=D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows-age-aware.jsonl" --dataset "Mendeley Infant Cry Sound=D:\量化\yingyu-data\research\mendeley-infant-cry-sound\rows.jsonl" --out PUBLIC_AUDIO_BENCHMARKS.md --limit 30
+```
+
+当前汇总见 `PUBLIC_AUDIO_BENCHMARKS.md`。这个报告会把 Top-2、质量拒判、年龄追问、中/高警觉和多数类基线放在同一张表里，避免把标签不均衡数据源误读成真实准确率。
+
 基于 `rows.jsonl` 的声学特征快照复跑候选规则：
 
 ```powershell
