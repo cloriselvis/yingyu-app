@@ -1,4 +1,4 @@
-const cacheName = "yingyu-app-v5";
+const cacheName = "yingyu-app-v6";
 const appShell = [
   "./",
   "./index.html",

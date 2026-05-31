@@ -32,6 +32,7 @@ test("session record preserves compact features, ranking, question answer, and f
     id: "s1",
     ts: 123,
     babyId: "宝宝",
+    babyProfile: { ageBucket: "3-8w", updatedAt: 121 },
     sourceName: "sample.wav",
     features,
     analysis,
@@ -54,6 +55,7 @@ test("session record preserves compact features, ranking, question answer, and f
   });
 
   assert.equal(session.id, "s1");
+  assert.equal(session.babyProfile.ageBucket, "3-8w");
   assert.equal(session.quality.score, 0.912);
   assert.equal(session.features.durationSec, 8.123);
   assert.deepEqual(session.analysis.ranking, [
@@ -152,6 +154,7 @@ test("appendManyBounded keeps the newest items within max length", () => {
 test("exportPayload includes schema and item counts", () => {
   const payload = feedbackStore.exportPayload({
     babyId: "宝宝",
+    babyProfile: { ageBucket: "0-2w", updatedAt: 111 },
     sessions: [{ id: "s1" }, { id: "s2" }],
     history: [{ sessionId: "s1" }],
     audioAttachments: [{ sessionId: "s1", base64: "YQ==" }],
@@ -160,6 +163,7 @@ test("exportPayload includes schema and item counts", () => {
 
   assert.equal(payload.schema, "yingyu.feedback.v1");
   assert.equal(payload.exportedAt, "2026-05-30T00:00:00.000Z");
+  assert.equal(payload.babyProfile.ageBucket, "0-2w");
   assert.equal(payload.counts.sessions, 2);
   assert.equal(payload.counts.calibrationItems, 1);
   assert.equal(payload.counts.audioAttachments, 1);
@@ -169,6 +173,7 @@ test("exportPayload includes schema and item counts", () => {
 test("normalizeImportedPayload sanitizes sessions and derives missing calibration history", () => {
   const payload = feedbackStore.exportPayload({
     babyId: " 小宝宝 ",
+    babyProfile: { ageBucket: "9-16w", updatedAt: 222 },
     sessions: [
       feedbackStore.buildSessionRecord({
         id: "s1",
@@ -190,6 +195,7 @@ test("normalizeImportedPayload sanitizes sessions and derives missing calibratio
   const imported = feedbackStore.normalizeImportedPayload(payload);
 
   assert.equal(imported.babyId, "小宝宝");
+  assert.equal(imported.babyProfile.ageBucket, "9-16w");
   assert.equal(imported.counts.sessions, 1);
   assert.equal(imported.counts.calibrationItems, 2);
   assert.equal(imported.history.length, 2);

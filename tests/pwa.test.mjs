@@ -45,6 +45,9 @@ test("main page includes recent feedback surface", async () => {
   assert.match(app, /canUseMicrophone/);
   assert.match(app, /finishContextQuestions/);
   assert.match(app, /applyContextAnswersToAnalysis/);
+  assert.match(app, /babyProfileKey/);
+  assert.match(app, /saveProfileFromContextAnswers/);
+  assert.match(app, /ageBucket/);
 });
 
 test("privacy page explains local audio handling and safety boundary", async () => {

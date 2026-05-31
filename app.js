@@ -44,6 +44,13 @@ const labels = {
   discomfort: "一般不适"
 };
 
+const ageBucketLabels = {
+  "0-2w": "0-2 周",
+  "3-8w": "3-8 周",
+  "9-16w": "9-16 周",
+  preterm_or_uncertain: "早产/不确定"
+};
+
 const featureLabels = {
   durationSec: "录音时长",
   validCrySec: "有效哭声",
@@ -113,7 +120,7 @@ function bindEvents() {
     state.pendingFeedbackAction = null;
     renderRecentFeedback();
     if (state.current) {
-      const updated = core.scoreAnalysis(state.current.features, { history: loadHistory() });
+      const updated = scoreFeatures(state.current.features);
       state.current = { ...state.current, ...updated };
       renderAnalysis(state.current);
     }
@@ -131,12 +138,13 @@ function bindEvents() {
     await audioStore.deleteSessionAudios(sessionIds).catch(() => {});
     localStorage.removeItem(historyKey());
     localStorage.removeItem(sessionsKey());
+    localStorage.removeItem(babyProfileKey());
     state.feedbackSaved = false;
     state.currentAttempts = [];
     state.pendingFeedbackAction = null;
     renderRecentFeedback();
     if (state.current) {
-      const updated = core.scoreAnalysis(state.current.features, { history: loadHistory() });
+      const updated = scoreFeatures(state.current.features);
       state.current = { ...state.current, ...updated };
       renderAnalysis(state.current);
     }
@@ -284,7 +292,7 @@ function analyzeSamplesDirect(samples, sampleRate, sourceName, options = {}) {
     els.analysisStatus.textContent = "分析中";
 
     const features = core.analyzeSamples(samples, sampleRate);
-    const scored = core.scoreAnalysis(features, { history: loadHistory() });
+    const scored = scoreFeatures(features);
 
     state.current = {
       id: feedbackStore.createSessionId(),
@@ -415,10 +423,12 @@ function finishContextQuestions(useAnswers) {
   if (!state.current) return;
   const answers = useAnswers ? state.contextAnswers.filter(Boolean) : [];
   if (answers.length) {
+    const babyProfile = saveProfileFromContextAnswers(answers) || state.current.babyProfile || loadBabyProfile();
     const updated = core.applyContextAnswersToAnalysis(state.current, answers);
     state.current = {
       ...state.current,
-      ...updated
+      ...updated,
+      babyProfile
     };
     state.questionAnswer = {
       questionId: "context_bundle",
@@ -842,6 +852,7 @@ async function saveFeedback(feedback) {
       id: state.current.id,
       ts: Date.now(),
       babyId: cleanBabyId(),
+      babyProfile: state.current.babyProfile || loadBabyProfile(),
       sourceName: state.current.sourceName,
       features: state.current.features,
       analysis: state.current,
@@ -864,7 +875,7 @@ async function saveFeedback(feedback) {
     renderRecentFeedback();
     renderFeedbackSaved(session);
 
-    const updated = core.scoreAnalysis(state.current.features, { history: loadHistory() });
+    const updated = scoreFeatures(state.current.features);
     state.current = {
       ...state.current,
       ...updated,
@@ -923,6 +934,7 @@ async function exportBabyData() {
   );
   const payload = feedbackStore.exportPayload({
     babyId,
+    babyProfile: loadBabyProfile(),
     sessions,
     history,
     audioAttachments
@@ -946,6 +958,9 @@ async function importBabyData(file) {
     if (imported.babyId) {
       els.babyName.value = imported.babyId;
       localStorage.setItem("yingyu:lastBaby", imported.babyId);
+    }
+    if (imported.babyProfile?.ageBucket) {
+      saveBabyProfile(imported.babyProfile);
     }
 
     const merged = feedbackStore.mergeImportedData({
@@ -976,7 +991,7 @@ async function importBabyData(file) {
     state.pendingFeedbackAction = null;
     renderRecentFeedback();
     if (state.current) {
-      const updated = core.scoreAnalysis(state.current.features, { history: loadHistory() });
+      const updated = scoreFeatures(state.current.features);
       state.current = { ...state.current, ...updated };
       renderAnalysis(state.current);
     }
@@ -1014,12 +1029,64 @@ function cleanBabyId() {
   return (els.babyName.value || "宝宝").trim() || "宝宝";
 }
 
+function scoreFeatures(features) {
+  return core.scoreAnalysis(features, {
+    history: loadHistory(),
+    babyProfile: loadBabyProfile()
+  });
+}
+
+function saveProfileFromContextAnswers(answers) {
+  const profilePatch = {};
+  for (const answer of answers) {
+    Object.assign(profilePatch, answer?.option?.profilePatch || {});
+  }
+  if (!Object.keys(profilePatch).length) return null;
+  return saveBabyProfile({
+    ...loadBabyProfile(),
+    ...profilePatch,
+    updatedAt: Date.now()
+  });
+}
+
+function loadBabyProfile() {
+  try {
+    return normalizeBabyProfile(JSON.parse(localStorage.getItem(babyProfileKey()) || "{}"));
+  } catch {
+    return {};
+  }
+}
+
+function saveBabyProfile(profile) {
+  const normalized = normalizeBabyProfile(profile);
+  if (!normalized.ageBucket) {
+    localStorage.removeItem(babyProfileKey());
+    return {};
+  }
+  localStorage.setItem(babyProfileKey(), JSON.stringify(normalized));
+  return normalized;
+}
+
+function normalizeBabyProfile(profile = {}) {
+  const ageBucket = ageBucketLabels[profile.ageBucket] ? profile.ageBucket : "";
+  if (!ageBucket) return {};
+  return {
+    ageBucket,
+    ageLabel: ageBucketLabels[ageBucket],
+    updatedAt: Number(profile.updatedAt) || Date.now()
+  };
+}
+
 function historyKey() {
   return `yingyu:v0:${cleanBabyId()}:history`;
 }
 
 function sessionsKey() {
   return `yingyu:v0:${cleanBabyId()}:sessions`;
+}
+
+function babyProfileKey() {
+  return `yingyu:v0:${cleanBabyId()}:profile`;
 }
 
 function loadHistory() {

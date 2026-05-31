@@ -70,13 +70,16 @@ export function analyzeSamples(samples, sampleRate) {
 
 export function scoreAnalysis(features, options = {}) {
   const quality = features.quality;
-  const highAlertScore = scoreHighAlert(features);
-  const highAlertLevel = getHighAlertLevel(highAlertScore, options.highAlertThresholds);
+  const babyProfile = normalizeBabyProfile(options.babyProfile);
+  let highAlertScore = scoreHighAlert(features);
   const baseScores = scoreNeeds(features, highAlertScore);
-  const personal = applyPersonalCalibration(baseScores, features, options.history || []);
+  const ageAdjusted = applyAgeCalibration(baseScores, highAlertScore, babyProfile);
+  highAlertScore = ageAdjusted.highAlertScore;
+  const highAlertLevel = getHighAlertLevel(highAlertScore, options.highAlertThresholds);
+  const personal = applyPersonalCalibration(ageAdjusted.scores, features, options.history || []);
   const ranking = rankScores(personal.scores);
   const uncertainty = ranking[1] ? 1 - (ranking[0].score - ranking[1].score) : 0;
-  const contextQuestions = chooseContextQuestions(ranking, highAlertLevel, uncertainty);
+  const contextQuestions = chooseContextQuestions(ranking, highAlertLevel, uncertainty, babyProfile);
   const question = contextQuestions[0] || null;
 
   return {
@@ -88,7 +91,8 @@ export function scoreAnalysis(features, options = {}) {
     ranking,
     uncertainty,
     question,
-    contextQuestions
+    contextQuestions,
+    babyProfile
   };
 }
 
@@ -651,7 +655,7 @@ function needLabel(key) {
   return labels[key] || key || "未知";
 }
 
-function chooseContextQuestions(ranking, highAlertLevel, uncertainty) {
+function chooseContextQuestions(ranking, highAlertLevel, uncertainty, babyProfile = {}) {
   const questions = [];
   const add = (question) => {
     if (!question || questions.some((item) => item.id === question.id)) return;
@@ -670,6 +674,10 @@ function chooseContextQuestions(ranking, highAlertLevel, uncertainty) {
     });
   }
 
+  if (!normalizeAgeBucket(babyProfile.ageBucket)) {
+    add(ageQuestion());
+  }
+
   const tired = ranking.find((item) => item.key === "tired");
   const hunger = ranking.find((item) => item.key === "hunger");
   const top = ranking[0];
@@ -680,47 +688,89 @@ function chooseContextQuestions(ranking, highAlertLevel, uncertainty) {
     (uncertainty >= 0.74 || top?.key === "hunger" || Math.abs((hunger?.score || 0) - tired.score) <= 0.12);
 
   if (tiredCouldMatter) {
-    add(awakeQuestion());
+    add(awakeQuestion(babyProfile));
   }
 
   if (!ranking[1]) {
-    add(topQuestion(top?.key));
+    add(topQuestion(top?.key, babyProfile));
     return questions.slice(0, 3);
   }
 
   const pair = [ranking[0].key, ranking[1].key].sort().join("-");
   if (pair === "hunger-tired") {
-    add(feedingQuestion());
-    add(awakeQuestion());
+    add(feedingQuestion(babyProfile));
+    add(awakeQuestion(babyProfile));
   } else if (pair === "gas-hunger") {
-    add(feedingQuestion());
+    add(feedingQuestion(babyProfile));
     add(gasQuestion());
   } else if (pair === "discomfort-gas") {
     add(gasQuestion());
     add(bodyQuestion());
   } else if (pair === "discomfort-hunger") {
-    add(feedingQuestion());
+    add(feedingQuestion(babyProfile));
     add(bodyQuestion());
   } else if (pair === "discomfort-tired") {
-    add(awakeQuestion());
+    add(awakeQuestion(babyProfile));
     add(bodyQuestion());
   } else if (pair === "gas-tired") {
     add(gasQuestion());
-    add(awakeQuestion());
+    add(awakeQuestion(babyProfile));
   }
 
   if (uncertainty >= 0.83) {
-    add(topQuestion(top?.key));
+    add(topQuestion(top?.key, babyProfile));
   }
 
   if (!questions.length) {
-    add(topQuestion(top?.key));
+    add(topQuestion(top?.key, babyProfile));
   }
 
   return questions.filter(Boolean).slice(0, 3);
 }
 
-function feedingQuestion() {
+function ageQuestion() {
+  return {
+    id: "age_bucket",
+    text: "宝宝现在多大？",
+    options: [
+      {
+        label: "0-2 周",
+        delta: { hunger: 0.04, discomfort: 0.02 },
+        highAlertDelta: 0.04,
+        profilePatch: { ageBucket: "0-2w" }
+      },
+      {
+        label: "3-8 周",
+        delta: { gas: 0.03, tired: 0.02 },
+        highAlertDelta: 0.01,
+        profilePatch: { ageBucket: "3-8w" }
+      },
+      {
+        label: "9-16 周",
+        delta: { tired: 0.04, hunger: -0.02 },
+        highAlertDelta: 0,
+        profilePatch: { ageBucket: "9-16w" }
+      },
+      {
+        label: "早产/不确定",
+        delta: { discomfort: 0.04 },
+        highAlertDelta: 0.06,
+        profilePatch: { ageBucket: "preterm_or_uncertain" }
+      }
+    ]
+  };
+}
+
+function feedingQuestion(babyProfile = {}) {
+  const ageOptions = feedingOptionsForAge(normalizeAgeBucket(babyProfile.ageBucket));
+  if (ageOptions) {
+    return {
+      id: "feeding_timing",
+      text: "上次喂奶大概多久前？",
+      options: ageOptions
+    };
+  }
+
   return {
     id: "feeding_timing",
     text: "上次喂奶大概多久前？",
@@ -732,7 +782,16 @@ function feedingQuestion() {
   };
 }
 
-function awakeQuestion() {
+function awakeQuestion(babyProfile = {}) {
+  const ageOptions = awakeOptionsForAge(normalizeAgeBucket(babyProfile.ageBucket));
+  if (ageOptions) {
+    return {
+      id: "awake_long",
+      text: "这次哭前醒着多久？",
+      options: ageOptions
+    };
+  }
+
   return {
     id: "awake_long",
     text: "这次哭前醒着多久？",
@@ -742,6 +801,58 @@ function awakeQuestion() {
       { label: "刚醒不久", delta: { hunger: 0.12, tired: -0.1 } }
     ]
   };
+}
+
+function feedingOptionsForAge(ageBucket) {
+  const byAge = {
+    "0-2w": [
+      { label: "45 分钟内", delta: { hunger: -0.12, gas: 0.1, discomfort: 0.04 } },
+      { label: "45-120 分钟", delta: { hunger: 0.08 } },
+      { label: "超过 2 小时/不确定", delta: { hunger: 0.14, gas: -0.03 } }
+    ],
+    "3-8w": [
+      { label: "60 分钟内", delta: { hunger: -0.12, gas: 0.1, discomfort: 0.03 } },
+      { label: "1-3 小时", delta: { hunger: 0.08 } },
+      { label: "超过 3 小时/不确定", delta: { hunger: 0.13, gas: -0.03 } }
+    ],
+    "9-16w": [
+      { label: "90 分钟内", delta: { hunger: -0.1, gas: 0.08, discomfort: 0.02 } },
+      { label: "1.5-3 小时", delta: { hunger: 0.06 } },
+      { label: "超过 3 小时/不确定", delta: { hunger: 0.12, gas: -0.03 } }
+    ],
+    preterm_or_uncertain: [
+      { label: "45 分钟内", delta: { hunger: -0.1, gas: 0.09, discomfort: 0.05 } },
+      { label: "45-120 分钟", delta: { hunger: 0.06 } },
+      { label: "超过 2 小时/不确定", delta: { hunger: 0.12, discomfort: 0.02 } }
+    ]
+  };
+  return byAge[ageBucket] || null;
+}
+
+function awakeOptionsForAge(ageBucket) {
+  const byAge = {
+    "0-2w": [
+      { label: "超过 45 分钟", delta: { tired: 0.2, hunger: -0.06, gas: -0.03 } },
+      { label: "20-45 分钟", delta: { tired: 0.04 } },
+      { label: "刚醒不久", delta: { hunger: 0.1, tired: -0.08 } }
+    ],
+    "3-8w": [
+      { label: "超过 1 小时", delta: { tired: 0.22, hunger: -0.08, gas: -0.04 } },
+      { label: "30-60 分钟", delta: { tired: 0.06 } },
+      { label: "刚醒不久", delta: { hunger: 0.12, tired: -0.1 } }
+    ],
+    "9-16w": [
+      { label: "超过 90 分钟", delta: { tired: 0.22, hunger: -0.08, gas: -0.04 } },
+      { label: "45-90 分钟", delta: { tired: 0.06 } },
+      { label: "刚醒不久", delta: { hunger: 0.1, tired: -0.1 } }
+    ],
+    preterm_or_uncertain: [
+      { label: "超过 45 分钟", delta: { tired: 0.18, discomfort: 0.04, hunger: -0.05 } },
+      { label: "20-45 分钟", delta: { tired: 0.04 } },
+      { label: "刚醒不久", delta: { hunger: 0.08, tired: -0.07 } }
+    ]
+  };
+  return byAge[ageBucket] || null;
 }
 
 function gasQuestion() {
@@ -768,12 +879,44 @@ function bodyQuestion() {
   };
 }
 
-function topQuestion(key) {
-  if (key === "hunger") return feedingQuestion();
+function topQuestion(key, babyProfile = {}) {
+  if (key === "hunger") return feedingQuestion(babyProfile);
   if (key === "gas") return gasQuestion();
-  if (key === "tired") return awakeQuestion();
+  if (key === "tired") return awakeQuestion(babyProfile);
   if (key === "discomfort") return bodyQuestion();
   return null;
+}
+
+function applyAgeCalibration(scores, highAlertScore, babyProfile = {}) {
+  const ageBucket = normalizeAgeBucket(babyProfile.ageBucket);
+  if (!ageBucket) return { scores, highAlertScore };
+
+  const priors = {
+    "0-2w": { delta: { hunger: 0.035, discomfort: 0.02 }, highAlertDelta: 0.035 },
+    "3-8w": { delta: { gas: 0.025, tired: 0.015 }, highAlertDelta: 0.01 },
+    "9-16w": { delta: { tired: 0.035, hunger: -0.015 }, highAlertDelta: 0 },
+    preterm_or_uncertain: { delta: { discomfort: 0.04 }, highAlertDelta: 0.06 }
+  };
+  const prior = priors[ageBucket];
+  const adjusted = { ...scores };
+  for (const [key, delta] of Object.entries(prior.delta)) {
+    adjusted[key] = clamp((adjusted[key] || 0) + delta, 0.02, 1);
+  }
+
+  return {
+    scores: normalizeScores(adjusted),
+    highAlertScore: clamp01(highAlertScore + prior.highAlertDelta)
+  };
+}
+
+function normalizeBabyProfile(profile = {}) {
+  const ageBucket = normalizeAgeBucket(profile.ageBucket);
+  if (!ageBucket) return {};
+  return { ageBucket };
+}
+
+function normalizeAgeBucket(value) {
+  return ["0-2w", "3-8w", "9-16w", "preterm_or_uncertain"].includes(value) ? value : "";
 }
 
 function vectorSimilarity(a, b) {

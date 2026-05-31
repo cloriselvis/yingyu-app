@@ -22,6 +22,7 @@ export function buildSessionRecord({
   id = createSessionId(),
   ts = Date.now(),
   babyId,
+  babyProfile = null,
   sourceName,
   features,
   analysis,
@@ -35,6 +36,7 @@ export function buildSessionRecord({
     id,
     ts,
     babyId,
+    babyProfile: normalizeBabyProfile(babyProfile),
     sourceName,
     quality: {
       usable: Boolean(features?.quality?.usable),
@@ -123,6 +125,7 @@ export function appendManyBounded(list, items, maxLength = 200) {
 
 export function exportPayload({
   babyId,
+  babyProfile = null,
   sessions = [],
   history = [],
   audioAttachments = [],
@@ -132,6 +135,7 @@ export function exportPayload({
     schema: "yingyu.feedback.v1",
     exportedAt,
     babyId,
+    babyProfile: normalizeBabyProfile(babyProfile),
     counts: {
       sessions: sessions.length,
       calibrationItems: history.length,
@@ -165,6 +169,7 @@ export function normalizeImportedPayload(payload, options = {}) {
 
   return {
     babyId: cleanBabyId(payload.babyId),
+    babyProfile: normalizeBabyProfile(payload.babyProfile),
     sessions,
     history,
     counts: {
@@ -255,6 +260,22 @@ function normalizeFeedback(feedback = {}) {
   };
 }
 
+function normalizeBabyProfile(profile = {}) {
+  const labels = {
+    "0-2w": "0-2 周",
+    "3-8w": "3-8 周",
+    "9-16w": "9-16 周",
+    preterm_or_uncertain: "早产/不确定"
+  };
+  const ageBucket = labels[profile?.ageBucket] ? profile.ageBucket : "";
+  if (!ageBucket) return {};
+  return {
+    ageBucket,
+    ageLabel: labels[ageBucket],
+    updatedAt: Number(profile.updatedAt) || 0
+  };
+}
+
 function compactFeatures(features = {}) {
   return {
     durationSec: round(features.durationSec),
@@ -281,6 +302,7 @@ function normalizeImportedSession(session) {
     id: String(session.id),
     ts: Number(session.ts) || Date.now(),
     babyId: cleanBabyId(session.babyId),
+    babyProfile: normalizeBabyProfile(session.babyProfile),
     sourceName: typeof session.sourceName === "string" ? session.sourceName.slice(0, 160) : "",
     quality: {
       usable: Boolean(session.quality?.usable),

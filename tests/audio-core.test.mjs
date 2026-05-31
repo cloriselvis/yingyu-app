@@ -328,7 +328,7 @@ test("tired risk is surfaced through awake-time question even when hunger ranks 
     veryHighBandRatio: 0.02,
     quality: { usable: true, score: 0.9, issues: [] }
   };
-  const analysis = core.scoreAnalysis(features);
+  const analysis = core.scoreAnalysis(features, { babyProfile: { ageBucket: "3-8w" } });
   const awakeLong = analysis.question.options.find((option) => option.label === "超过 1 小时");
   const updated = core.applyQuestionAnswerToAnalysis(analysis, awakeLong);
 
@@ -376,6 +376,72 @@ test("context answers combine recent events before final ranking", () => {
   assert.ok(updated.scores.hunger < analysis.scores.hunger);
   assert.ok(updated.scores.tired > analysis.scores.tired || updated.scores.gas > analysis.scores.gas);
   assert.equal(updated.contextQuestions.length, 0);
+});
+
+test("missing age profile is asked as a post-recording context question", () => {
+  const features = {
+    durationSec: 10,
+    validCrySec: 5,
+    cryRatio: 0.46,
+    peakRms: 0.14,
+    avgActiveRms: 0.08,
+    noiseFloor: 0.005,
+    snrDb: 20,
+    episodeCount: 7,
+    avgEpisodeSec: 0.55,
+    longestEpisodeSec: 1.1,
+    pitchMedian: 520,
+    pitchP90: 590,
+    pitchSpread: 120,
+    zcrActive: 0.1,
+    burstiness: 0.42,
+    irregularity: 0.35,
+    spectralCentroid: 1200,
+    highBandRatio: 0.18,
+    veryHighBandRatio: 0.02,
+    quality: { usable: true, score: 0.9, issues: [] }
+  };
+  const analysis = core.scoreAnalysis(features);
+
+  assert.equal(analysis.contextQuestions[0].id, "age_bucket");
+  assert.equal(analysis.contextQuestions[0].options[0].profilePatch.ageBucket, "0-2w");
+});
+
+test("known age profile changes timing thresholds and conservative safety calibration", () => {
+  const features = {
+    durationSec: 10,
+    validCrySec: 5,
+    cryRatio: 0.46,
+    peakRms: 0.14,
+    avgActiveRms: 0.08,
+    noiseFloor: 0.005,
+    snrDb: 20,
+    episodeCount: 7,
+    avgEpisodeSec: 0.55,
+    longestEpisodeSec: 1.1,
+    pitchMedian: 520,
+    pitchP90: 590,
+    pitchSpread: 120,
+    zcrActive: 0.1,
+    burstiness: 0.42,
+    irregularity: 0.35,
+    spectralCentroid: 1200,
+    highBandRatio: 0.18,
+    veryHighBandRatio: 0.02,
+    quality: { usable: true, score: 0.9, issues: [] }
+  };
+  const newborn = core.scoreAnalysis(features, { babyProfile: { ageBucket: "0-2w" } });
+  const older = core.scoreAnalysis(features, { babyProfile: { ageBucket: "9-16w" } });
+  const preterm = core.scoreAnalysis(features, { babyProfile: { ageBucket: "preterm_or_uncertain" } });
+  const newbornFeeding = newborn.contextQuestions.find((question) => question.id === "feeding_timing");
+  const olderFeeding = older.contextQuestions.find((question) => question.id === "feeding_timing");
+  const olderAwake = older.contextQuestions.find((question) => question.id === "awake_long");
+
+  assert.ok(newborn.highAlertScore > older.highAlertScore);
+  assert.ok(preterm.highAlertScore > older.highAlertScore + 0.05);
+  assert.ok(newbornFeeding.options.some((option) => option.label === "超过 2 小时/不确定"));
+  assert.ok(olderFeeding.options.some((option) => option.label === "超过 3 小时/不确定"));
+  assert.ok(!olderAwake || olderAwake.options.some((option) => option.label === "超过 90 分钟"));
 });
 
 test("quality guidance turns rejection issues into concrete recording advice", () => {
