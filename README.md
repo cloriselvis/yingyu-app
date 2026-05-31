@@ -133,9 +133,11 @@ npm run prepare:donateacry -- D:\path\to\donateacry-corpus --out D:\path\to\prep
 
 ```powershell
 npm run evaluate:donateacry -- D:\path\to\prepared --out D:\path\to\rows.jsonl --summary D:\path\to\summary.json
+npm run evaluate:donateacry -- D:\path\to\prepared --age-context coarse --out D:\path\to\rows-age-coarse.jsonl --summary D:\path\to\summary-age-coarse.json
 ```
 
 注意：Donate-a-Cry 是用户自标弱标签，只能用于工程基准和错误分析，不能直接当作产品准确率承诺。
+`--age-context none` 是默认值；`strict` 只使用 4-8 周到 `3-8w` 的较稳映射；`coarse` 会把 Donate-a-Cry 的 0-4 周、4-8 周、2-6 月粗年龄段映射到婴语年龄桶，只用于离线对照，不当作精确月龄。
 
 生成误差分析报告：
 
@@ -182,7 +184,7 @@ npm run review:pack -- (Join-Path $root 'rows.jsonl') (Join-Path $root 'wav') --
 跨公开数据源基本盘汇总：
 
 ```powershell
-npm run report:datasets -- --dataset "EnesBabyCries age-aware smoke=D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows-age-aware.jsonl" --dataset "Mendeley Infant Cry Sound=D:\量化\yingyu-data\research\mendeley-infant-cry-sound\rows.jsonl" --out PUBLIC_AUDIO_BENCHMARKS.md --limit 30
+npm run report:datasets -- --dataset "EnesBabyCries age-aware smoke=D:\量化\yingyu-data\research\enesbabycries\audio-smoke\rows-age-aware.jsonl" --dataset "Mendeley Infant Cry Sound=D:\量化\yingyu-data\research\mendeley-infant-cry-sound\rows.jsonl" --dataset "Donate-a-Cry clean age-coarse=D:\量化\yingyu-data\research\donateacry-clean\rows-age-coarse.jsonl" --out PUBLIC_AUDIO_BENCHMARKS.md --limit 30
 ```
 
 当前汇总见 `PUBLIC_AUDIO_BENCHMARKS.md`。这个报告会把 Top-2、质量拒判、年龄追问、中/高警觉和多数类基线放在同一张表里，避免把标签不均衡数据源误读成真实准确率。

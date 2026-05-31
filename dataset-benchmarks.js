@@ -85,6 +85,7 @@ export function createDatasetComparisonMarkdown(comparison) {
   lines.push("");
   lines.push("- Keep EnesBabyCries as the age/context calibration regression set.");
   lines.push("- Use Mendeley hunger as a small hunger regression set, but treat `uncomfortable` as a broad care-needs bucket until human review confirms subtypes.");
+  lines.push("- Keep Donate-a-Cry clean as a larger weak-label stress set; treat its age buckets as coarse and review `tired` plus high-alert misses before tuning.");
   lines.push("- Do not merge datasets into one headline accuracy number; compare per-source label definitions and majority baselines first.");
   lines.push("- Build or import more balanced `tired` and safety/pain datasets before tuning those categories.");
   lines.push("");

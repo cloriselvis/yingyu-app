@@ -2,6 +2,7 @@ import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { analyzeSamples, featureSnapshot, getDecisionSupport, scoreAnalysis } from "../audio-core.js";
 import {
+  donateAgeToBabyProfile,
   isCoreAge,
   isDonateACryAudioFile,
   parseDonateACryFilename,
@@ -12,11 +13,20 @@ import { decodeWav } from "../wav-io.js";
 const root = process.argv[2];
 const outArgIndex = process.argv.indexOf("--out");
 const summaryArgIndex = process.argv.indexOf("--summary");
+const ageContextArgIndex = process.argv.indexOf("--age-context");
 const outFile = outArgIndex >= 0 ? process.argv[outArgIndex + 1] : "";
 const summaryFile = summaryArgIndex >= 0 ? process.argv[summaryArgIndex + 1] : "";
+const ageContextMode = ageContextArgIndex >= 0 ? process.argv[ageContextArgIndex + 1] : "none";
 
 if (!root) {
-  console.error("Usage: node scripts/evaluate-donateacry.mjs <donateacry-folder> [--out rows.jsonl] [--summary summary.json]");
+  console.error(
+    "Usage: node scripts/evaluate-donateacry.mjs <donateacry-folder> [--out rows.jsonl] [--summary summary.json] [--age-context none|strict|coarse]"
+  );
+  process.exit(1);
+}
+
+if (!["none", "strict", "coarse"].includes(ageContextMode)) {
+  console.error("--age-context must be one of: none, strict, coarse");
   process.exit(1);
 }
 
@@ -37,6 +47,16 @@ for await (const file of walk(root)) {
   }
 
   row.coreAge = isCoreAge(meta);
+  row.ageContextMode = ageContextMode;
+  if (ageContextMode !== "none") {
+    const ageProfile = donateAgeToBabyProfile(meta, { mode: ageContextMode });
+    if (ageProfile.ageBucket) {
+      row.ageBucket = ageProfile.ageBucket;
+      row.sourceAgeLabel = ageProfile.sourceAgeLabel;
+      row.ageBucketConfidence = ageProfile.ageBucketConfidence;
+      row.babyProfile = { ageBucket: ageProfile.ageBucket };
+    }
+  }
 
   if (meta.extension !== "wav") {
     row.error = "unsupported_audio_extension_convert_to_wav_first";
@@ -47,8 +67,9 @@ for await (const file of walk(root)) {
   try {
     const decoded = decodeWav(await readFile(file));
     const features = analyzeSamples(decoded.samples, decoded.sampleRate);
-    const analysis = scoreAnalysis(features);
-    const support = getDecisionSupport(features, analysis);
+    const scoreOptions = row.babyProfile?.ageBucket ? { babyProfile: row.babyProfile } : {};
+    const analysis = scoreAnalysis(features, scoreOptions);
+    const support = getDecisionSupport(features, analysis, scoreOptions);
     row.decoded = true;
     row.sampleRate = decoded.sampleRate;
     row.usable = features.quality.usable;

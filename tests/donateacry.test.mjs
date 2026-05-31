@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import test from "node:test";
-import { parseDonateACryFilename, summarizeRows } from "../donateacry.js";
+import { donateAgeToBabyProfile, parseDonateACryFilename, summarizeRows } from "../donateacry.js";
 
 const execFileAsync = promisify(execFile);
 const sampleRate = 16000;
@@ -27,6 +27,17 @@ test("parseDonateACryFilename parses iOS and Android conventions", () => {
   assert.equal(android.reasonLabel, "scared");
   assert.equal(android.yingyuLabel, "discomfort");
   assert.equal(android.comparable, false);
+});
+
+test("donateAgeToBabyProfile keeps strict and coarse age mappings separate", () => {
+  const newborn = parseDonateACryFilename("0D1AD73E-4C5E-45F3-85C4-9A3CB71E8856-1430742197-1.0-m-04-hu.wav");
+  const fourToEightWeeks = parseDonateACryFilename("0c8f14a9-6999-485b-97a2-913c1cbf099c-1431028888092-1.7-m-48-bu.wav");
+  const twoToSixMonths = parseDonateACryFilename("0c8f14a9-6999-485b-97a2-913c1cbf099c-1431028888092-1.7-m-26-bu.wav");
+
+  assert.deepEqual(donateAgeToBabyProfile(newborn, { mode: "strict" }), {});
+  assert.equal(donateAgeToBabyProfile(fourToEightWeeks, { mode: "strict" }).ageBucket, "3-8w");
+  assert.equal(donateAgeToBabyProfile(newborn, { mode: "coarse" }).ageBucket, "0-2w");
+  assert.equal(donateAgeToBabyProfile(twoToSixMonths, { mode: "coarse" }).ageBucket, "9-16w");
 });
 
 test("summarizeRows reports weak-label top-1 and top-2 metrics", () => {
@@ -101,10 +112,41 @@ test("evaluate-donateacry CLI scores wav files and writes summary", async () => 
   assert.equal(summary.decoded, 2);
   assert.equal(summary.comparable, 2);
   assert.equal(summary.coreAgeEvaluated, 2);
+  assert.equal(rows[0].ageContextMode, "none");
+  assert.equal(rows[0].ageBucket, undefined);
   assert.ok("top1Accuracy" in summary);
   assert.equal(rows[0].featureSetVersion, 1);
   assert.ok(Number.isFinite(rows[0].snrDb));
   assert.ok("spectralCentroid" in rows[0]);
+});
+
+test("evaluate-donateacry CLI can pass coarse Donate-a-Cry age context", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "yingyu-donate-age-"));
+  const outRows = join(dir, "rows.jsonl");
+  const outSummary = join(dir, "summary.json");
+  const set = join(dir, "clips");
+  await mkdir(set);
+
+  const hungerName = "0D1AD73E-4C5E-45F3-85C4-9A3CB71E8856-1430742197-1.0-m-04-hu.wav";
+  const gasName = "0c8f14a9-6999-485b-97a2-913c1cbf099c-1431028888092-1.7-m-48-bu.wav";
+  await writeFile(join(set, hungerName), encodeWav16(synthCry(520), sampleRate));
+  await writeFile(join(set, gasName), encodeWav16(synthCry(680), sampleRate));
+
+  await execFileAsync(
+    process.execPath,
+    ["scripts/evaluate-donateacry.mjs", set, "--age-context", "coarse", "--out", outRows, "--summary", outSummary],
+    { cwd: new URL("..", import.meta.url) }
+  );
+
+  const rows = (await readFile(outRows, "utf8")).trim().split("\n").map((line) => JSON.parse(line));
+
+  const hunger = rows.find((row) => row.fileName === hungerName);
+  const gas = rows.find((row) => row.fileName === gasName);
+  assert.equal(hunger.ageContextMode, "coarse");
+  assert.equal(hunger.ageBucket, "0-2w");
+  assert.equal(hunger.sourceAgeLabel, "0-4_weeks");
+  assert.equal(hunger.babyProfile.ageBucket, "0-2w");
+  assert.equal(gas.ageBucket, "3-8w");
 });
 
 test("prepare-donateacry preserves nested paths to avoid output collisions", async () => {

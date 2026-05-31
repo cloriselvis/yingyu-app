@@ -6,7 +6,7 @@
 
 | 数据源 | 状态 | 当前价值 |
 | --- | --- | --- |
-| Donate-a-Cry | 已下载并已有评估脚本 | 用户自标弱标签，适合做工程基准、质量门控、Top-2 和错判复盘。 |
+| Donate-a-Cry | 已重跑 clean 子集无年龄/粗年龄两套评估 | 用户自标弱标签，适合做工程基准、质量门控、Top-2 和错判复盘；当前摘要见 `DONATEACRY_CLEAN_RESULTS.md`。 |
 | EnesBabyCries | 已下载大包和特征数据 | 0.5、1.5、2.5、3.5 月纵向家庭录音，适合验证月龄校准、个体差异和“原因分类需谨慎”。 |
 | Mendeley `Infant's Cry Sound` | 已通过公开 API 下载 63 个文件，并转成 16 kHz mono wav | 标签为 hungry、tired、uncomfortable；`hunger` 子集可做小型回归基准，`uncomfortable` 标签过宽，需要人工抽听复核。 |
 

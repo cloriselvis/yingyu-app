@@ -18,6 +18,17 @@ export const donateAgeMap = {
   "22": "over_2_years"
 };
 
+export const donateAgeProfileMap = {
+  strict: {
+    "48": { ageBucket: "3-8w", ageBucketConfidence: "aligned" }
+  },
+  coarse: {
+    "04": { ageBucket: "0-2w", ageBucketConfidence: "coarse_0-4_weeks" },
+    "48": { ageBucket: "3-8w", ageBucketConfidence: "aligned" },
+    "26": { ageBucket: "9-16w", ageBucketConfidence: "coarse_2-6_months_partial_scope" }
+  }
+};
+
 export function parseDonateACryFilename(filename) {
   const base = filename.split(/[\\/]/).pop() || filename;
   const extensionMatch = base.match(/\.([^.]+)$/);
@@ -70,6 +81,19 @@ export function isDonateACryAudioFile(filename) {
 
 export function isCoreAge(meta) {
   return meta.ageCode === "04" || meta.ageCode === "48";
+}
+
+export function donateAgeToBabyProfile(meta, options = {}) {
+  const mode = options.mode || "strict";
+  const table = donateAgeProfileMap[mode] || donateAgeProfileMap.strict;
+  const mapped = table[meta?.ageCode];
+  if (!mapped?.ageBucket) return {};
+  return {
+    ageBucket: mapped.ageBucket,
+    ageBucketConfidence: mapped.ageBucketConfidence,
+    ageContextMode: mode,
+    sourceAgeLabel: meta.ageLabel || donateAgeMap[meta.ageCode] || "unknown_age"
+  };
 }
 
 export function summarizeRows(rows) {
