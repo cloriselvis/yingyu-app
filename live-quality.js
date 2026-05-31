@@ -11,7 +11,7 @@ export function createLiveQualityTracker() {
 
 export function updateLiveQualityTracker(tracker, byteTimeData) {
   const rms = byteTimeDomainRms(byteTimeData);
-  const active = rms >= 0.012;
+  const active = rms >= 0.004;
   tracker.frames += 1;
   tracker.activeFrames += active ? 1 : 0;
   tracker.peakRms = Math.max(tracker.peakRms, rms);
@@ -22,8 +22,12 @@ export function updateLiveQualityTracker(tracker, byteTimeData) {
 export function summarizeLiveQuality(tracker, elapsedSec) {
   const activeRatio = tracker.frames ? tracker.activeFrames / tracker.frames : 0;
   if (elapsedSec < 2) return { level: "recording", text: COPY.ui.liveQuality.start };
-  if (tracker.peakRms < 0.007) return { level: "weak", text: COPY.ui.liveQuality.weak };
-  if (elapsedSec >= 4 && activeRatio < 0.08) return { level: "weak", text: COPY.ui.liveQuality.notEnoughCry };
+  if (elapsedSec >= 4 && tracker.peakRms < 0.0015) {
+    return { level: "recording", text: COPY.ui.capture.waitingCry };
+  }
+  if (elapsedSec >= 6 && activeRatio < 0.02 && tracker.peakRms < 0.004) {
+    return { level: "recording", text: COPY.ui.liveQuality.notEnoughCry };
+  }
   if (elapsedSec < 8) {
     return {
       level: "recording",

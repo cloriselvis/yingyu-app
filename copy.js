@@ -65,8 +65,8 @@ export const COPY = {
     },
     liveQuality: {
       start: "先录几秒",
-      weak: "声音偏小，靠近一点",
-      notEnoughCry: "哭声还不够",
+      weak: "继续录，手机会自动校准",
+      notEnoughCry: "继续录，尽量对准宝宝",
       keepRecording: "继续录 {seconds} 秒",
       good: "可以停止",
       enough: "已足够，建议停止"

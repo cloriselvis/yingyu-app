@@ -19,11 +19,18 @@ test("live quality asks user to keep recording before enough time", () => {
   assert.equal(summarizeLiveQuality(tracker, 4).text, "继续录 4 秒");
 });
 
-test("live quality detects weak volume", () => {
+test("live quality avoids low-volume warnings during usable recording", () => {
   const tracker = createLiveQualityTracker();
   for (let i = 0; i < 12; i += 1) updateLiveQualityTracker(tracker, new Uint8Array([127, 128, 129, 128]));
 
-  assert.equal(summarizeLiveQuality(tracker, 5).text, "声音偏小，靠近一点");
+  assert.equal(summarizeLiveQuality(tracker, 5).text, "继续录 3 秒");
+});
+
+test("live quality waits for cry only when input is effectively silent", () => {
+  const tracker = createLiveQualityTracker();
+  for (let i = 0; i < 12; i += 1) updateLiveQualityTracker(tracker, new Uint8Array([128, 128, 128, 128]));
+
+  assert.equal(summarizeLiveQuality(tracker, 5).text, "等待哭声");
 });
 
 test("live quality accepts softer mobile microphone frames as active", () => {
@@ -33,12 +40,12 @@ test("live quality accepts softer mobile microphone frames as active", () => {
   assert.equal(summarizeLiveQuality(tracker, 4).level, "recording");
 });
 
-test("live quality detects too little crying activity", () => {
+test("live quality stays neutral when crying activity is sparse", () => {
   const tracker = createLiveQualityTracker();
   updateLiveQualityTracker(tracker, loudFrame());
   for (let i = 0; i < 15; i += 1) updateLiveQualityTracker(tracker, new Uint8Array([128, 128, 128, 128]));
 
-  assert.equal(summarizeLiveQuality(tracker, 5).text, "哭声还不够");
+  assert.equal(summarizeLiveQuality(tracker, 5).text, "继续录 3 秒");
 });
 
 test("live quality says recording can stop after enough active audio", () => {
