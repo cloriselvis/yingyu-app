@@ -18,7 +18,7 @@ const labelMap = labelsFile ? await loadLabels(labelsFile) : new Map();
 const rows = [];
 for await (const file of walk(root)) {
   if (!file.toLowerCase().endsWith(".wav")) continue;
-  const relativeFile = relative(root, file);
+  const relativeFile = toPosixPath(relative(root, file));
   const labelInfo = labelMap.get(normalizePath(relativeFile)) || null;
   try {
     const decoded = decodeWav(await readFile(file));
@@ -150,7 +150,11 @@ function normalizeLabel(label, reasonLabel) {
 }
 
 function normalizePath(path) {
-  return String(path || "").replaceAll("\\", "/").toLowerCase();
+  return toPosixPath(path).toLowerCase();
+}
+
+function toPosixPath(path) {
+  return String(path || "").replaceAll("\\", "/");
 }
 
 async function* walk(dir) {

@@ -28,13 +28,13 @@ for await (const file of walk(source)) {
   const meta = parseDonateACryFilename(file);
   const row = {
     ...meta,
-    file: relative(source, file),
+    file: toPosixPath(relative(source, file)),
     fileName: meta.file,
     parsed: meta.ok
   };
 
   if (convert && meta.ok) {
-    const relativeSource = relative(source, file);
+    const relativeSource = toPosixPath(relative(source, file));
     const relativeWav = relativeSource.replace(/\.[^.\\/]+$/, ".wav");
     const target = join(outDir, relativeWav);
     try {
@@ -44,7 +44,7 @@ for await (const file of walk(source)) {
       } else {
         await execFileAsync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-i", file, "-ac", "1", "-ar", "16000", target]);
       }
-      row.convertedWav = relative(outDir, target);
+      row.convertedWav = toPosixPath(relative(outDir, target));
     } catch (error) {
       row.error = `ffmpeg_convert_failed: ${error.message}`;
     }
@@ -68,4 +68,8 @@ async function* walk(dir) {
     if (entry.isDirectory()) yield* walk(path);
     else yield path;
   }
+}
+
+function toPosixPath(path) {
+  return String(path || "").replaceAll("\\", "/");
 }

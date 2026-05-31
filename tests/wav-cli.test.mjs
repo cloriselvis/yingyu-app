@@ -61,7 +61,7 @@ test("benchmark-folder CLI writes one JSONL row per wav", async () => {
   const row = JSON.parse(lines[0]);
 
   assert.equal(lines.length, 1);
-  assert.equal(row.file, "set-a\\cry.wav");
+  assert.equal(row.file, "set-a/cry.wav");
   assert.equal(row.parsed, true);
   assert.equal(row.decoded, true);
   assert.equal(row.usable, true);

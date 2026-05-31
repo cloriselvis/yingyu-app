@@ -129,8 +129,8 @@ test("prepare-donateacry preserves nested paths to avoid output collisions", asy
     .map((line) => JSON.parse(line));
 
   assert.equal(rows.length, 2);
-  assert.equal(rows[0].convertedWav, `a\\${fileName}`);
-  assert.equal(rows[1].convertedWav, `b\\${fileName}`);
+  assert.equal(rows[0].convertedWav, `a/${fileName}`);
+  assert.equal(rows[1].convertedWav, `b/${fileName}`);
   assert.ok(await readFile(join(out, "a", fileName)));
   assert.ok(await readFile(join(out, "b", fileName)));
 });
