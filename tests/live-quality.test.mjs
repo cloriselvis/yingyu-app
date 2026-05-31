@@ -26,6 +26,13 @@ test("live quality detects weak volume", () => {
   assert.equal(summarizeLiveQuality(tracker, 5).text, "声音偏小，靠近一点");
 });
 
+test("live quality accepts softer mobile microphone frames as active", () => {
+  const tracker = createLiveQualityTracker();
+  for (let i = 0; i < 12; i += 1) updateLiveQualityTracker(tracker, softFrame());
+
+  assert.equal(summarizeLiveQuality(tracker, 4).level, "recording");
+});
+
 test("live quality detects too little crying activity", () => {
   const tracker = createLiveQualityTracker();
   updateLiveQualityTracker(tracker, loudFrame());
@@ -44,4 +51,8 @@ test("live quality says recording can stop after enough active audio", () => {
 
 function loudFrame() {
   return new Uint8Array([80, 176, 82, 174, 84, 172, 86, 170]);
+}
+
+function softFrame() {
+  return new Uint8Array([124, 132, 125, 131, 126, 130, 125, 131]);
 }

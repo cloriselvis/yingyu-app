@@ -264,6 +264,8 @@ function compactFeatures(features = {}) {
     durationSec: round(features.durationSec),
     validCrySec: round(features.validCrySec),
     cryRatio: round(features.cryRatio),
+    rawPeakRms: round(features.rawPeakRms),
+    inputGain: round(features.inputGain || 1),
     snrDb: round(features.snrDb),
     pitchMedian: round(features.pitchMedian),
     pitchP90: round(features.pitchP90),

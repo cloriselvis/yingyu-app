@@ -3,10 +3,12 @@ import { COPY, formatCopy } from "./copy.js";
 export const DEFAULT_AGE_CALIBRATION_STRENGTH = 0.5;
 
 export function analyzeSamples(samples, sampleRate) {
-  const durationSec = samples.length / sampleRate;
+  const prepared = prepareSamplesForAnalysis(samples);
+  const analysisSamples = prepared.samples;
+  const durationSec = analysisSamples.length / sampleRate;
   const frameSize = 1024;
   const hop = 512;
-  const frameCount = Math.max(0, Math.floor((samples.length - frameSize) / hop) + 1);
+  const frameCount = Math.max(0, Math.floor((analysisSamples.length - frameSize) / hop) + 1);
   const rms = [];
   const zcr = [];
 
@@ -14,9 +16,9 @@ export function analyzeSamples(samples, sampleRate) {
     const start = frame * hop;
     let energy = 0;
     let crossings = 0;
-    let last = samples[start];
+    let last = analysisSamples[start];
     for (let i = 0; i < frameSize; i += 1) {
-      const value = samples[start + i];
+      const value = analysisSamples[start + i];
       energy += value * value;
       if ((value >= 0 && last < 0) || (value < 0 && last >= 0)) crossings += 1;
       last = value;
@@ -42,8 +44,8 @@ export function analyzeSamples(samples, sampleRate) {
   const cryRatio = frameCount ? activeIndices.length / frameCount : 0;
   const snrDb = 20 * Math.log10(Math.max(avgActiveRms, 0.00001) / noiseFloor);
   const episodes = findEpisodes(active, hop / sampleRate);
-  const pitchValues = estimatePitches(samples, sampleRate, active, rms, threshold);
-  const spectral = estimateSpectralFeatures(samples, sampleRate, active, rms, threshold);
+  const pitchValues = estimatePitches(analysisSamples, sampleRate, active, rms, threshold);
+  const spectral = estimateSpectralFeatures(analysisSamples, sampleRate, active, rms, threshold);
   const burstiness = estimateBurstiness(rms, active, peakRms);
   const irregularity = estimateIrregularity(episodes, pitchValues);
   const activeZcr = activeIndices.map((index) => zcr[index]);
@@ -53,6 +55,9 @@ export function analyzeSamples(samples, sampleRate) {
     validCrySec,
     cryRatio,
     peakRms,
+    rawPeakRms: prepared.rawPeakRms,
+    rawPeakAbs: prepared.rawPeakAbs,
+    inputGain: prepared.gain,
     avgActiveRms,
     noiseFloor,
     snrDb: Number.isFinite(snrDb) ? snrDb : 0,
@@ -222,6 +227,9 @@ export function featureSnapshot(features) {
     validCrySec: round3(features.validCrySec),
     cryRatio: round3(features.cryRatio),
     peakRms: round3(features.peakRms),
+    rawPeakRms: round3(features.rawPeakRms),
+    rawPeakAbs: round3(features.rawPeakAbs),
+    inputGain: round3(features.inputGain || 1),
     avgActiveRms: round3(features.avgActiveRms),
     noiseFloor: round3(features.noiseFloor),
     snrDb: round3(features.snrDb),
@@ -261,10 +269,36 @@ export function clamp(value, min, maxValue) {
   return Math.min(maxValue, Math.max(min, Number.isFinite(value) ? value : min));
 }
 
+function prepareSamplesForAnalysis(samples) {
+  let rawPeakAbs = 0;
+  let sum = 0;
+  for (const sample of samples) {
+    const abs = Math.abs(sample);
+    rawPeakAbs = Math.max(rawPeakAbs, abs);
+    sum += sample * sample;
+  }
+
+  const rawPeakRms = Math.sqrt(sum / Math.max(samples.length, 1));
+  if (rawPeakAbs < 0.0025) {
+    return { samples, rawPeakAbs, rawPeakRms, gain: 1 };
+  }
+
+  const gain = rawPeakAbs < 0.12 ? Math.min(0.12 / rawPeakAbs, 18) : 1;
+  if (gain <= 1.05) {
+    return { samples, rawPeakAbs, rawPeakRms, gain: 1 };
+  }
+
+  const normalized = new Float32Array(samples.length);
+  for (let i = 0; i < samples.length; i += 1) {
+    normalized[i] = clamp(samples[i] * gain, -1, 1);
+  }
+  return { samples: normalized, rawPeakAbs, rawPeakRms, gain };
+}
+
 function assessQuality(features) {
   const issues = [];
   if (features.durationSec < 4) issues.push(COPY.quality.issues.tooShort);
-  if (features.peakRms < 0.014) issues.push(COPY.quality.issues.lowVolume);
+  if ((features.rawPeakRms || features.peakRms) < 0.01) issues.push(COPY.quality.issues.lowVolume);
   if (features.validCrySec < 2.2) issues.push(COPY.quality.issues.notEnoughCry);
   if (features.cryRatio < 0.14) issues.push(COPY.quality.issues.lowCryRatio);
   if (features.snrDb < 5) issues.push(COPY.quality.issues.noisy);
@@ -281,10 +315,17 @@ function assessQuality(features) {
   );
 
   return {
-    usable: issues.length === 0 || (issues.length === 1 && features.validCrySec >= 3 && features.snrDb >= 8),
+    usable: isUsableQuality(issues, features),
     score,
     issues
   };
+}
+
+function isUsableQuality(issues, features) {
+  const lowVolume = COPY.quality.issues.lowVolume;
+  const blockingIssues = issues.filter((issue) => issue !== lowVolume);
+  if (!blockingIssues.length && features.validCrySec >= 2.2 && features.cryRatio >= 0.14) return true;
+  return blockingIssues.length === 1 && features.validCrySec >= 3 && features.snrDb >= 8;
 }
 
 function findEpisodes(active, frameSec) {

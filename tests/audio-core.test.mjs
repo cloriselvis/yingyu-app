@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import * as core from "../audio-core.js";
+import { COPY } from "../copy.js";
 
 const sampleRate = 16000;
 
@@ -32,6 +33,27 @@ test("rhythmic moderate cry is analyzable and ranks hunger first", () => {
   assert.equal(analysis.highAlertLevel, "low");
   assert.equal(analysis.ranking[0].key, "hunger");
   assert.ok(analysis.ranking[0].score > analysis.ranking[1].score);
+});
+
+test("low-amplitude clear cry is normalized instead of rejected as too quiet", () => {
+  const samples = synthCry({
+    frequency: 520,
+    amplitude: 0.004,
+    noiseAmplitude: 0.00012,
+    episodeSec: 0.55,
+    gapSec: 0.55,
+    harmonic: 0.1,
+    jitter: 0.015,
+    burst: 0.05,
+    seed: 11
+  });
+  const features = core.analyzeSamples(samples, sampleRate);
+  const analysis = core.scoreAnalysis(features);
+
+  assert.equal(features.quality.usable, true);
+  assert.ok(features.inputGain > 1);
+  assert.ok(features.quality.issues.includes(COPY.quality.issues.lowVolume));
+  assert.equal(analysis.ranking[0].key, "hunger");
 });
 
 test("continuous sharp cry raises high-alert risk and safety question", () => {
@@ -499,6 +521,7 @@ function synthCry({
   harmonic,
   jitter,
   burst,
+  noiseAmplitude = 0.006,
   seed
 }) {
   const rng = mulberry32(seed);
@@ -516,7 +539,7 @@ function synthCry({
       frequency * (1 + Math.sin(t * 18) * jitter + Math.sin(t * 3.1) * jitter * 0.5);
     phase += (2 * Math.PI * modulatedFrequency) / sampleRate;
 
-    const noise = (rng() * 2 - 1) * 0.006;
+    const noise = (rng() * 2 - 1) * noiseAmplitude;
     const burstBoost = 1 + (Math.sin(t * 21) > 0.92 ? burst : 0);
     samples[i] =
       envelope *
