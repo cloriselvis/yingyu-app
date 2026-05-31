@@ -95,7 +95,7 @@ export function analyzeReviewAnnotations(pack, annotationsPayload, options = {})
 export function createReviewAnnotationMarkdown(summary, options = {}) {
   const limit = options.limit ?? 20;
   const lines = [];
-  lines.push("# 婴语抽听标注汇总");
+  lines.push("# 哭了么抽听标注汇总");
   lines.push("");
   lines.push(`- 抽听样本：${summary.totalItems}`);
   lines.push(`- 已标注：${summary.annotationCount}（${percent(summary.coverageRate)}）`);

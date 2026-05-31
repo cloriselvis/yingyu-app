@@ -86,7 +86,7 @@ export function buildReviewPack(rows, options = {}) {
 
 export function createReviewMarkdown(pack) {
   const lines = [];
-  lines.push("# 婴语离线抽听包");
+  lines.push("# 哭了么离线抽听包");
   lines.push("");
   lines.push(`- 生成时间：${pack.createdAt}`);
   lines.push(`- 输入 rows：${pack.totalRows}`);
@@ -163,7 +163,7 @@ export function createReviewHtml(pack) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>婴语离线抽听包</title>
+  <title>哭了么离线抽听包</title>
   <style>
     :root {
       color-scheme: light;
@@ -524,7 +524,7 @@ export function createReviewHtml(pack) {
   <main class="page">
     <section class="hero">
       <div>
-        <h1>婴语离线抽听包</h1>
+        <h1>哭了么离线抽听包</h1>
         <p class="subhead">先听公开数据和自采音频，标出弱标签、模型判断和音频质量谁更可信。</p>
       </div>
       <div class="summary" aria-label="抽听包概览">

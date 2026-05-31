@@ -1,6 +1,6 @@
 {
-  "name": "婴语",
-  "short_name": "婴语",
+  "name": "哭了么",
+  "short_name": "哭了么",
   "description": "0-4 月婴儿哭声辅助判断原型",
   "start_url": "./index.html",
   "scope": "./",

@@ -13,9 +13,9 @@
 - 已下载：63/63
 - 已转码：63/63，16 kHz mono wav
 
-文件夹到婴语弱标签的映射：
+文件夹到哭了么弱标签的映射：
 
-| Mendeley source label | 文件数 | 婴语弱标签 |
+| Mendeley source label | 文件数 | 哭了么弱标签 |
 | --- | ---: | --- |
 | hungry | 31 | `hunger` |
 | uncomfortable | 31 | `discomfort` |

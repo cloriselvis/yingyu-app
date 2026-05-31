@@ -65,7 +65,7 @@ test("sweep-thresholds CLI writes a replay comparison report", async () => {
   });
 
   const report = await readFile(reportPath, "utf8");
-  assert.match(report, /婴语离线复评分候选对比/);
+  assert.match(report, /哭了么离线复评分候选对比/);
   assert.match(report, /候选概览/);
 });
 

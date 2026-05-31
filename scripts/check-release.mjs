@@ -41,7 +41,7 @@ if (!app.includes("canUseMicrophone")) throw new Error("app.js is missing microp
 if (app.includes("试用样本")) throw new Error("release app still contains demo sample entry text.");
 
 const manifest = JSON.parse(await readFile(join(dist, "manifest.webmanifest"), "utf8"));
-if (manifest.name !== "婴语") throw new Error("manifest name mismatch.");
+if (manifest.name !== "哭了么") throw new Error("manifest name mismatch.");
 if (manifest.display !== "standalone") throw new Error("manifest display must be standalone.");
 
 const headers = await readFile(join(dist, "_headers"), "utf8");

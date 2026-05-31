@@ -151,7 +151,7 @@ export function compareReplayCandidates(rows, candidates = replayCandidates, opt
 
 export function createReplayComparisonMarkdown(comparison) {
   const lines = [];
-  lines.push("# 婴语离线复评分候选对比");
+  lines.push("# 哭了么离线复评分候选对比");
   lines.push("");
   lines.push(`- 输入 rows：${comparison.totalRows}`);
   lines.push(`- 可复评分：${comparison.replayableRows}`);

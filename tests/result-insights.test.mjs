@@ -47,7 +47,7 @@ test("analyzeResultRows extracts failures, high-alert samples, and per-class met
 test("createMarkdownReport renders actionable sections", () => {
   const report = createMarkdownReport(analyzeResultRows(sampleRows(), { limit: 3 }));
 
-  assert.match(report, /婴语评估误差分析报告/);
+  assert.match(report, /哭了么评估误差分析报告/);
   assert.match(report, /Top-1 弱标签命中率/);
   assert.match(report, /算法基本盘检查/);
   assert.match(report, /置信度分层/);
@@ -69,7 +69,7 @@ test("report-results CLI writes a markdown report", async () => {
   });
 
   const report = await readFile(reportPath, "utf8");
-  assert.match(report, /婴语评估误差分析报告/);
+  assert.match(report, /哭了么评估误差分析报告/);
   assert.match(report, /拒判样本/);
 });
 

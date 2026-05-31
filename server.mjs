@@ -53,5 +53,5 @@ createServer(async (req, res) => {
     res.end("Internal server error");
   }
 }).listen(port, () => {
-  console.log(`婴语 MVP running at http://localhost:${port}`);
+  console.log(`哭了么 MVP running at http://localhost:${port}`);
 });

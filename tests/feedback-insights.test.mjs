@@ -107,7 +107,7 @@ test("createFeedbackMarkdownReport renders actionable sections", () => {
   });
   const markdown = createFeedbackMarkdownReport(insights);
 
-  assert.match(markdown, /# 婴语反馈复盘报告/);
+  assert.match(markdown, /# 哭了么反馈复盘报告/);
   assert.match(markdown, /Top-2 覆盖有效处理/);
   assert.match(markdown, /内测有效性指标/);
   assert.match(markdown, /首步有效率/);
@@ -157,7 +157,7 @@ test("report-feedback CLI writes a markdown report", async () => {
   });
   const markdown = await readFile(output, "utf8");
 
-  assert.match(markdown, /婴语反馈复盘报告/);
+  assert.match(markdown, /哭了么反馈复盘报告/);
   assert.match(markdown, /宝宝/);
 
   await rm(dir, { recursive: true, force: true });

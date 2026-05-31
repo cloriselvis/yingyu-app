@@ -58,7 +58,7 @@ test("report-review CLI writes a markdown summary", async () => {
   });
 
   const report = await readFile(outPath, "utf8");
-  assert.match(report, /婴语抽听标注汇总/);
+  assert.match(report, /哭了么抽听标注汇总/);
   assert.match(report, /已标注：4/);
 });
 

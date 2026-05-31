@@ -55,8 +55,8 @@ test("build-review-pack CLI copies selected audio and writes manifests", async (
   assert.equal(manifest.selectedCount, 6);
   assert.equal(manifest.copiedAudio, 2);
   assert.ok(manifest.missingAudio >= 1);
-  assert.match(review, /婴语离线抽听包/);
-  assert.match(html, /婴语离线抽听包/);
+  assert.match(review, /哭了么离线抽听包/);
+  assert.match(html, /哭了么离线抽听包/);
   assert.match(html, /<audio controls/);
 });
 

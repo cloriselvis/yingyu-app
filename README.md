@@ -1,4 +1,4 @@
-# 婴语 MVP
+# 哭了么 MVP
 
 这是一个本地可跑的 0-4 月婴儿哭声辅助判断原型。
 
@@ -137,7 +137,7 @@ npm run evaluate:donateacry -- D:\path\to\prepared --age-context coarse --out D:
 ```
 
 注意：Donate-a-Cry 是用户自标弱标签，只能用于工程基准和错误分析，不能直接当作产品准确率承诺。
-`--age-context none` 是默认值；`strict` 只使用 4-8 周到 `3-8w` 的较稳映射；`coarse` 会把 Donate-a-Cry 的 0-4 周、4-8 周、2-6 月粗年龄段映射到婴语年龄桶，只用于离线对照，不当作精确月龄。
+`--age-context none` 是默认值；`strict` 只使用 4-8 周到 `3-8w` 的较稳映射；`coarse` 会把 Donate-a-Cry 的 0-4 周、4-8 周、2-6 月粗年龄段映射到哭了么年龄桶，只用于离线对照，不当作精确月龄。
 
 生成误差分析报告：
 

@@ -27,7 +27,7 @@ npm run review:pack -- D:\量化\yingyu-data\research\enesbabycries\audio-smoke\
 - 总计：24 个 wav。
 - `labels.csv` 对所有 24 个 wav 写入 `ageBucket/ageMonth/enesCause`，用于模拟产品录音后获得月龄上下文。
 - `labels-no-age.csv` 只保留可比较弱标签，用于稳定复跑无月龄基线。
-- 可比较标签：只映射 `hunger -> hunger`、`discomfort -> discomfort`。`loneliness` 不直接映射到婴语的 `tired/gas/discomfort`，只做带月龄的观察样本。
+- 可比较标签：只映射 `hunger -> hunger`、`discomfort -> discomfort`。`loneliness` 不直接映射到哭了么的 `tired/gas/discomfort`，只做带月龄的观察样本。
 
 ## 当前结果：带月龄上下文
 
@@ -80,7 +80,7 @@ Top-2 未覆盖样本清单：
 
 ## 下一步
 
-- 抽听 Top-2 未覆盖样本，区分真实模型错判、Enes 标签与婴语标签体系不一致、以及截取前 20 秒不含主要哭声的问题。
+- 抽听 Top-2 未覆盖样本，区分真实模型错判、Enes 标签与哭了么标签体系不一致、以及截取前 20 秒不含主要哭声的问题。
 - 对 `loneliness` 单独做安抚/接触类分析，不把它强行并入 `tired`。
 - 扩大样本后继续复跑 `sweep:age`，不能只看平均 Top-2，还要看安全追问触发率和高置信错判。
 - 后续如果加入后端模型或 embedding，这批 1A 长 bout 可作为回归 smoke test；所有公开数据都先归档，但只有能对齐标签定义的数据进入准确率评估。

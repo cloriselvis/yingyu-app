@@ -43,7 +43,7 @@
 
 - 近期最有价值的不是追逐一个“大而全准确率”，而是建立三类离线检查：哭声/非哭声质量门控、月龄校准是否改善阈值、Top-2 + 追问是否覆盖有效处理。
 - 公开数据标签来源差异很大，不能混在一起宣称统一准确率；每个数据源应单独报告标签定义、年龄范围、录音环境和可比较范围。
-- Mendeley 的 `uncomfortable` 不能直接等同婴语 `discomfort`，更像“照护需求大桶”；这类数据要先人工抽听，再决定是否调 `discomfort/gas/hunger` 边界。
+- Mendeley 的 `uncomfortable` 不能直接等同哭了么 `discomfort`，更像“照护需求大桶”；这类数据要先人工抽听，再决定是否调 `discomfort/gas/hunger` 边界。
 - 跨数据源汇总见 `PUBLIC_AUDIO_BENCHMARKS.md`：Enes、Mendeley 和 Donate-a-Cry 要按各自标签定义单独看，不能汇总成一个产品准确率。
 - AxonData sample 进入 `report:cry-positive` 质量门控链路，18/18 通过可用性门控，但 8 段触发中警觉，需要抽听确认高警觉阈值是否过敏。
 - DynamicSuperb 414 条已进入弱标签评估：Top-2 73.1%，但拒判率 49%，且 `tired` Top-2 只有 6.3%；它更适合作为质量门控和疲劳类失败样本库，而不是准确率宣传材料。

@@ -149,7 +149,7 @@ export function exportPayload({
 
 export function normalizeImportedPayload(payload, options = {}) {
   if (!payload || typeof payload !== "object") {
-    throw new Error("导入文件不是有效的婴语数据。");
+    throw new Error("导入文件不是有效的哭了么数据。");
   }
   if (payload.schema && payload.schema !== "yingyu.feedback.v1") {
     throw new Error("导入文件版本不支持。");

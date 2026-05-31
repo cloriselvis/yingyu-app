@@ -6,7 +6,7 @@ test("manifest exposes installable app metadata", async () => {
   const root = new URL("..", import.meta.url);
   const manifest = JSON.parse(await readFile(new URL("manifest.webmanifest", root), "utf8"));
 
-  assert.equal(manifest.name, "婴语");
+  assert.equal(manifest.name, "哭了么");
   assert.equal(manifest.display, "standalone");
   assert.equal(manifest.start_url, "./index.html");
   assert.equal(manifest.icons[0].src, "./icon.svg");
@@ -56,7 +56,7 @@ test("privacy page explains local audio handling and safety boundary", async () 
 
   assert.match(html, /录音默认只在当前浏览器本地分析/);
   assert.match(html, /不是医疗诊断/);
-  assert.match(html, /返回婴语/);
+  assert.match(html, /返回哭了么/);
 });
 
 test("main page app renders action-flow feedback controls", async () => {
