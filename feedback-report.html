@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>婴语反馈复盘</title>
+    <meta name="theme-color" content="#04796b" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./report.css" />
+  </head>
+  <body>
+    <main class="app-shell report-shell">
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">当前宝宝反馈复盘</p>
+            <h1>反馈复盘</h1>
+          </div>
+          <nav class="report-nav" aria-label="页面导航">
+            <a href="./index.html">录音分析</a>
+            <a href="./report.html">评估报告</a>
+            <label class="file-btn" for="feedbackFile">
+              <span>上传宝宝 JSON</span>
+              <input id="feedbackFile" type="file" accept=".json,application/json" />
+            </label>
+          </nav>
+        </header>
+
+        <section class="report-drop" id="dropZone">
+          <strong>拖入“导出当前宝宝数据”的 JSON，或点击右上角上传</strong>
+          <span>本页只在浏览器本地分析；如果 JSON 内含音频附件，可在样本列表里直接播放。</span>
+        </section>
+
+        <section class="report-summary" id="summaryCards" aria-live="polite"></section>
+
+        <section class="result-panel pilot-panel">
+          <div class="panel-title">
+            <h2>内测有效性</h2>
+            <span id="pilotStatus">等待数据</span>
+          </div>
+          <div id="pilotBox" class="pilot-box empty-state">上传宝宝 JSON 后显示。</div>
+        </section>
+
+        <section class="report-grid">
+          <article class="result-panel">
+            <div class="panel-title">
+              <h2>有效处理</h2>
+              <span id="actionStatus">等待数据</span>
+            </div>
+            <div id="actionTable" class="report-table empty-state">上传宝宝 JSON 后显示。</div>
+          </article>
+
+          <article class="result-panel">
+            <div class="panel-title">
+              <h2>未缓解尝试</h2>
+              <span id="unresolvedStatus">等待数据</span>
+            </div>
+            <div id="unresolvedBars" class="bar-list empty-state">上传宝宝 JSON 后显示。</div>
+          </article>
+        </section>
+
+        <section class="tabs-band">
+          <div class="report-tabs" role="tablist" aria-label="反馈样本列表">
+            <button class="active" data-tab="misses" type="button">需要复盘</button>
+            <button data-tab="highAlert" type="button">高警觉</button>
+            <button data-tab="questions" type="button">追问答案</button>
+            <button data-tab="audio" type="button">音频附件</button>
+            <button data-tab="notes" type="button">校准建议</button>
+          </div>
+          <div id="detailTable" class="report-table empty-state">上传宝宝 JSON 后显示。</div>
+        </section>
+      </section>
+    </main>
+
+    <script src="./pwa.js" type="module"></script>
+    <script src="./feedback-report.js" type="module"></script>
+  </body>
+</html>

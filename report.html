@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>婴语评估报告</title>
+    <meta name="theme-color" content="#04796b" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./report.css" />
+  </head>
+  <body>
+    <main class="app-shell report-shell">
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">rows.jsonl 误差分析</p>
+            <h1>评估报告</h1>
+          </div>
+          <nav class="report-nav" aria-label="页面导航">
+            <a href="./index.html">录音分析</a>
+            <label class="file-btn" for="rowsFile">
+              <span>上传 rows.jsonl</span>
+              <input id="rowsFile" type="file" accept=".jsonl,.json,text/plain,application/json" />
+            </label>
+          </nav>
+        </header>
+
+        <section class="report-drop" id="dropZone">
+          <strong>拖入 rows.jsonl，或点击右上角上传</strong>
+          <span>支持 `npm run evaluate:donateacry` 生成的 rows.jsonl。本页只在浏览器本地分析。</span>
+        </section>
+
+        <section class="report-summary" id="summaryCards" aria-live="polite"></section>
+
+        <section class="result-panel pilot-panel">
+          <div class="panel-title">
+            <h2>算法基本盘</h2>
+            <span id="gateStatus">等待数据</span>
+          </div>
+          <div id="gateBox" class="pilot-box empty-state">上传 rows.jsonl 后显示。</div>
+        </section>
+
+        <section class="report-grid">
+          <article class="result-panel">
+            <div class="panel-title">
+              <h2>分类表现</h2>
+              <span id="classStatus">等待数据</span>
+            </div>
+            <div id="classTable" class="report-table empty-state">上传 rows.jsonl 后显示。</div>
+          </article>
+
+          <article class="result-panel">
+            <div class="panel-title">
+              <h2>质量问题</h2>
+              <span id="qualityStatus">等待数据</span>
+            </div>
+            <div id="qualityBars" class="bar-list empty-state">上传 rows.jsonl 后显示。</div>
+          </article>
+        </section>
+
+        <section class="tabs-band">
+          <div class="report-tabs" role="tablist" aria-label="样本列表">
+            <button class="active" data-tab="highAlert" type="button">高警觉</button>
+            <button data-tab="lowConfidenceTop2" type="button">低信心追问</button>
+            <button data-tab="highConfidenceMisses" type="button">高信心错判</button>
+            <button data-tab="safetyMode" type="button">安全模式</button>
+            <button data-tab="rejected" type="button">拒判</button>
+            <button data-tab="top1Misses" type="button">Top-1 失败</button>
+            <button data-tab="top2Misses" type="button">Top-2 失败</button>
+            <button data-tab="closeCalls" type="button">接近样本</button>
+            <button data-tab="errors" type="button">错误</button>
+          </div>
+          <div id="sampleTable" class="report-table empty-state">上传 rows.jsonl 后显示。</div>
+        </section>
+      </section>
+    </main>
+
+    <script src="./pwa.js" type="module"></script>
+    <script src="./report.js" type="module"></script>
+  </body>
+</html>

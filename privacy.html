@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>隐私与安全说明 - 婴语</title>
+    <meta name="theme-color" content="#04796b" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell info-shell">
+      <section class="workspace info-workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">测试版说明</p>
+            <h1>隐私与安全说明</h1>
+          </div>
+          <a href="./index.html" class="text-btn panel-link">返回婴语</a>
+        </header>
+
+        <section class="info-panel" aria-label="隐私与安全说明">
+          <div class="info-section">
+            <h2>这是什么</h2>
+            <p>婴语是 0-4 月婴儿哭声辅助排查原型。它会根据哭声质量、声学特征和简短追问，给出可能原因和下一步处理建议。</p>
+            <p>它不是医疗诊断，也不能代替医生、护士或急救判断。测试结果只适合作为照护排查参考。</p>
+          </div>
+
+          <div class="info-section">
+            <h2>录音如何处理</h2>
+            <ul class="info-list">
+              <li>录音默认只在当前浏览器本地分析，不上传服务器。</li>
+              <li>不勾选“保留音频”时，反馈只保存结构化结果，不保存原始音频。</li>
+              <li>勾选“保留音频”后，本次音频会保存在当前设备浏览器里，并可能随“导出当前宝宝数据”一起导出。</li>
+              <li>点击“清空当前宝宝反馈”可以清除当前宝宝的本地反馈记录。</li>
+            </ul>
+          </div>
+
+          <div class="info-section warning-section">
+            <h2>何时不要依赖它</h2>
+            <p>如果出现下面情况，请优先联系医生或当地急救服务，不要等待 App 判断：</p>
+            <ul class="info-list">
+              <li>发热、体温异常，或明显精神状态变差。</li>
+              <li>摔碰、呛咳、呼吸异常、肤色异常。</li>
+              <li>哭声持续尖锐、无法安抚，或照护者直觉认为“不对劲”。</li>
+              <li>喂养、排便、尿量或活动状态出现明显异常。</li>
+            </ul>
+          </div>
+
+          <div class="info-section">
+            <h2>测试时请反馈</h2>
+            <ul class="info-list">
+              <li>手机能不能正常打开、录音、上传音频。</li>
+              <li>音频质量提示是否看得懂，是否知道该怎么重录。</li>
+              <li>初判 Top-2 和下一步处理建议是否有参考价值。</li>
+              <li>哪些文案让你困惑、不放心，或需要说得更直接。</li>
+            </ul>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="./pwa.js" type="module"></script>
+  </body>
+</html>

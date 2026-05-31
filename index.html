@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>婴语 MVP</title>
+    <meta name="theme-color" content="#04796b" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">0-4 月哭声辅助判断</p>
+            <h1>婴语</h1>
+          </div>
+          <div class="baby-switcher" aria-label="当前宝宝">
+            <label for="babyName">宝宝</label>
+            <input id="babyName" maxlength="18" autocomplete="off" />
+          </div>
+        </header>
+
+        <section class="release-notice" aria-label="测试版说明">
+          <strong>测试版</strong>
+          <span>只做哭声辅助排查，不做诊断；发热、摔碰、精神差或持续尖锐哭，请优先联系医生。录音默认只在本机分析，勾选“保留音频”后才会写入导出数据。<a href="./privacy.html">隐私与安全说明</a></span>
+        </section>
+
+        <section class="capture-panel" aria-label="录音分析">
+          <div class="meter-card">
+            <canvas id="waveform" width="900" height="220" aria-hidden="true"></canvas>
+            <div class="meter-overlay">
+              <div>
+                <span id="recordState">准备录音</span>
+                <strong id="timer">00:00</strong>
+              </div>
+              <div class="quality-pill" id="liveQuality">等待哭声</div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button id="recordBtn" class="primary-btn" type="button" aria-label="开始录音">
+              <span class="btn-icon">●</span>
+              <span>开始录音</span>
+            </button>
+            <button id="stopBtn" class="icon-btn" type="button" disabled aria-label="停止录音" title="停止录音">
+              <span>■</span>
+            </button>
+            <label class="file-btn" for="audioFile">
+              <span>上传音频</span>
+              <input id="audioFile" type="file" accept="audio/*" />
+            </label>
+            <label class="audio-consent">
+              <input id="keepAudio" type="checkbox" />
+              <span>保留音频</span>
+            </label>
+          </div>
+          <div id="environmentHint" class="environment-hint hidden"></div>
+        </section>
+
+        <section class="result-grid">
+          <article class="result-panel" aria-live="polite">
+            <div class="panel-title">
+              <h2>初判</h2>
+              <span id="analysisStatus">未分析</span>
+            </div>
+            <div id="summary" class="summary empty">
+              录 8-15 秒哭声后，我会先判断音频质量，再给出高警觉风险和最可能的两个原因。
+            </div>
+            <div id="ranking" class="ranking"></div>
+          </article>
+
+          <article class="result-panel">
+            <div class="panel-title">
+              <h2>下一步</h2>
+              <span id="actionStatus">等待结果</span>
+            </div>
+            <div id="questionBox" class="question-box hidden"></div>
+            <div id="actionPlan" class="action-plan">
+              结果出来后，这里会显示优先处理步骤。
+            </div>
+            <div id="feedbackBox" class="feedback hidden"></div>
+          </article>
+        </section>
+
+        <section class="detail-panel">
+          <div class="panel-title">
+            <h2>信号</h2>
+            <div class="panel-actions">
+              <a href="./feedback-report.html" class="text-btn panel-link">反馈复盘</a>
+              <label class="text-btn import-btn" for="importBaby">
+                导入宝宝数据
+                <input id="importBaby" type="file" accept="application/json,.json" />
+              </label>
+              <button id="exportBaby" type="button" class="text-btn">导出当前宝宝数据</button>
+              <button id="resetBaby" type="button" class="text-btn">清空当前宝宝反馈</button>
+            </div>
+          </div>
+          <div id="features" class="features-grid"></div>
+          <div class="recent-feedback">
+            <div class="sub-title">
+              <h3>最近反馈</h3>
+              <span id="recentStatus">暂无</span>
+            </div>
+            <div id="recentFeedback" class="recent-list empty-state">当前宝宝保存反馈后会显示在这里。</div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="./pwa.js" type="module"></script>
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>

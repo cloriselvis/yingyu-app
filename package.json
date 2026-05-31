@@ -1,0 +1,22 @@
+{
+  "name": "yingyu-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "build": "node scripts/build-static.mjs",
+    "check:release": "node scripts/check-release.mjs",
+    "package:release": "node scripts/package-release.mjs",
+    "analyze:wav": "node scripts/analyze-wav.mjs",
+    "benchmark:wav": "node scripts/benchmark-folder.mjs",
+    "prepare:donateacry": "node scripts/prepare-donateacry.mjs",
+    "evaluate:donateacry": "node scripts/evaluate-donateacry.mjs",
+    "report:results": "node scripts/report-results.mjs",
+    "report:feedback": "node scripts/report-feedback.mjs",
+    "report:review": "node scripts/report-review.mjs",
+    "review:pack": "node scripts/build-review-pack.mjs",
+    "sweep:thresholds": "node scripts/sweep-thresholds.mjs",
+    "test": "node --test"
+  }
+}

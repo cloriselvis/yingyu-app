@@ -1,0 +1,280 @@
+.report-shell {
+  width: min(1280px, calc(100vw - 28px));
+}
+
+.report-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.report-nav a {
+  min-height: 44px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 14px;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.report-nav a:hover {
+  border-color: var(--accent);
+}
+
+.report-drop {
+  display: grid;
+  gap: 7px;
+  border: 1px dashed rgba(4, 121, 107, 0.45);
+  border-radius: 8px;
+  padding: 18px;
+  background: rgba(4, 121, 107, 0.05);
+  color: var(--ink);
+}
+
+.report-drop.dragover {
+  border-color: var(--accent);
+  background: rgba(4, 121, 107, 0.1);
+}
+
+.report-drop span,
+.empty-state {
+  color: var(--muted);
+}
+
+.report-summary {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metric-card {
+  min-height: 92px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.metric-card span {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.metric-card strong {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+  gap: 16px;
+}
+
+.report-table {
+  width: 100%;
+  overflow: auto;
+}
+
+.report-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.report-table th,
+.report-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 9px 8px;
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.report-table th {
+  color: var(--muted);
+  font-weight: 700;
+  background: var(--surface-strong);
+}
+
+.report-table td.file-cell {
+  max-width: 460px;
+  white-space: normal;
+  word-break: break-all;
+}
+
+.bar-list {
+  display: grid;
+  gap: 10px;
+}
+
+.bar-item {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) minmax(160px, 3fr) 48px;
+  align-items: center;
+  gap: 10px;
+}
+
+.bar-name {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.bar-value {
+  color: var(--muted);
+  font-size: 13px;
+  text-align: right;
+}
+
+.tabs-band {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.report-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+}
+
+.report-tabs button {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-height: 38px;
+  padding: 0 12px;
+  background: #fff;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.report-tabs button.active {
+  border-color: var(--accent);
+  background: rgba(4, 121, 107, 0.09);
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.score-pill {
+  display: inline-grid;
+  place-items: center;
+  min-width: 46px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #eef5f3;
+  color: var(--accent-strong);
+  font-size: 12px;
+}
+
+.mini-audio {
+  width: 210px;
+  max-width: 48vw;
+  height: 32px;
+}
+
+.note-list {
+  display: grid;
+  gap: 10px;
+}
+
+.note-list p {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--surface-strong);
+  color: var(--ink);
+}
+
+.pilot-panel {
+  box-shadow: var(--shadow);
+}
+
+.pilot-box {
+  display: grid;
+  gap: 12px;
+}
+
+.pilot-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pilot-metrics div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--surface-strong);
+}
+
+.pilot-metrics span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.pilot-metrics strong {
+  font-size: 22px;
+}
+
+.pilot-box table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.pilot-box th,
+.pilot-box td {
+  border-bottom: 1px solid var(--line);
+  padding: 8px;
+  text-align: left;
+}
+
+.status-pill {
+  display: inline-grid;
+  place-items: center;
+  min-width: 58px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #eef5f3;
+  color: var(--accent-strong);
+  font-size: 12px;
+}
+
+.status-pill.fail {
+  background: #fff5f4;
+  color: var(--red);
+}
+
+.status-pill.collect {
+  background: #fff8ea;
+  color: var(--amber);
+}
+
+@media (max-width: 980px) {
+  .report-summary,
+  .report-grid,
+  .pilot-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .bar-item {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .bar-value {
+    text-align: left;
+  }
+}
